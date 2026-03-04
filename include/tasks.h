@@ -1,7 +1,7 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
-void readPrio3SensorsAsync();
+void readPrio3Sensors();
 
 struct SensorData {
     // Alarm (prio 1)

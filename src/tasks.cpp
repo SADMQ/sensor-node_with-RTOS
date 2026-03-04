@@ -1,5 +1,5 @@
 // --- definierar HUR (sekvensen) och VAD som ska köras --- 
-#include "sensors.h"
+#include "tasks.h"
 #include "sensor_dht11.h"
 #include <stdio.h>
 #include <Arduino.h>
@@ -21,7 +21,7 @@ SensorData currentStatus = {
     .waterLeak = false
 };
 
-void readPrio3SensorsAsync(){
+void readPrio3Sensors(){
     static int currentSensor = READING_DHT; // static -> sätts endast EN gång (init)
     // för att minimiera jitter för "låg-prio" sensorer - läs asynkront, en sensor åt gången.
     switch (currentSensor)
