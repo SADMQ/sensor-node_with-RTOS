@@ -15,9 +15,9 @@ This project handles all sensor data for an alarm system, utilizing an Arduino U
 * MCU: Arduino Uno R4 WiFi
 * Sensors:
 
-        → DHT11 : *indoor temp + indoor humidity*      
-        → MQ2 : *Gas sensor (detecting fire)*
-        → DS18B20 : *Temp sensor (detecting fire)*
-        → PIR : *Motion detector*
-        → Reed : *Magnet sensor (detect open doors/windows)*
-        → Rain-sensor : *Detect water leak*
+        → DHT11 : indoor temp + indoor humidity
+        → MQ2 : Gas sensor (detecting fire)
+        → DS18B20 : Temp sensor (detecting fire)
+        → PIR : Motion detector
+        → Reed : Magnet sensor (detect open doors/windows)
+        → Rain-sensor : Detect water leak
