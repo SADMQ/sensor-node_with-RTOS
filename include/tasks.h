@@ -3,9 +3,13 @@
 #include <Arduino.h>
 #include <stdio.h>
 
-enum SensorState {
+enum SensorStateP3 {
     READING_DHT,
     READING_WATER
+};
+enum SensorStateP2 {
+    READING_DS18B20,
+    READING_MQ2
 };
 
 void sensorsInit();
