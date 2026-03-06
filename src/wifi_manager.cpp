@@ -1,6 +1,5 @@
 #include <WiFiS3.h>
-
-bool connectedToWiFi = false;
+#include "alarm.h"
 
 // kolla om vi är anslutan till wifi
 // retunerar true om connected.
@@ -16,16 +15,16 @@ void initWiFi(){
 // hanterar wifi
 void manageWiFi(){
     if (!wifiIsConnected()){
-        if (connectedToWiFi){
-            connectedToWiFi = false;
-        printf("\n..WiFi disconneced..");
+        if (node.connectionStatus.wifiIsActive){
+            node.connectionStatus.wifiIsActive = false;
+        printf("\n\n..WiFi disconneced..");
         printf("\n\n");
         }
 
     } else {
-        if (!connectedToWiFi){
-            connectedToWiFi = true;
-            printf("\nConneced to WiFi: ");
+        if (!node.connectionStatus.wifiIsActive){
+            node.connectionStatus.wifiIsActive = true;
+            printf("\n\nConneced to WiFi: ");
             printf(WIFI_SSID);
             printf("\n\n");
         }

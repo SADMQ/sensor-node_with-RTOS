@@ -6,6 +6,10 @@
 //definierar node-strukten (samt deklarera nässlade struktar)
 System node = {
   .runStatus = WAKING_UP,
+  .connectionStatus = {
+    .wifiIsActive = false,
+    .bleIsActive = false,
+  },
   .alarmMode = STATE_DISARMED,  // ska initieras som "STATE_DISARMED".
   .alarmStatus = {
     .intrusionAlarm = false,

@@ -17,6 +17,11 @@ typedef enum
     STATE_ARMED_AWAY
 }AlarmMode;
 
+typedef struct {
+    bool wifiIsActive;
+    bool bleIsActive;
+}ConnectionStatus;
+
 // Struct för all sensor data som samlas in
 typedef struct {
     // Alarm (prio 1)
@@ -49,7 +54,7 @@ typedef struct
 typedef struct
 {
     RunStatus runStatus;       // WAKING_UP (ca 60 s) | RUNNING
-    // WIFI & BLE status?
+    ConnectionStatus connectionStatus; // WiFi Active? | BLE Active?
     AlarmMode alarmMode;       // Disarmed | Armed home | Armed away
     AlarmReason alarmStatus;   // intrusionAlarm | fireAlarm | waterLeak | systemFailure
     SensorData sensors;         // all sensordata

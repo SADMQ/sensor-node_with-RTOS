@@ -4,7 +4,7 @@
 #include "tasks.h"
 #include "alarm.h"
 #include "wifi_manager.h"
-#define WAKE_UP_TIME 60
+#define WAKE_UP_SYSTEM_MS 10000 // maybe 60s ? (MQ2 is slowest..)
 
 
 // enum för resp. PRIO-klass.
@@ -81,7 +81,7 @@ void taskScheduler(){
 
 void startingSystem(){
     if (node.runStatus == WAKING_UP){
-      if (millis() >= WAKE_UP_TIME){
+      if (millis() >= WAKE_UP_SYSTEM_MS){
         node.runStatus = RUNNING;
         printf("\n<<< SYSTEM READY >>>\n\n");
       }
