@@ -83,6 +83,7 @@ void startingSystem(){
     if (node.runStatus == WAKING_UP){
       if (millis() >= WAKE_UP_TIME){
         node.runStatus = RUNNING;
+        printf("<<< SYSTEM READY >>>");
       }
     }
 }
