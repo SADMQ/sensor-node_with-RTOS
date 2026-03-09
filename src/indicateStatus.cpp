@@ -10,15 +10,14 @@ bool ledActive = false;
 unsigned long ledClock = 0;
 
 
-// Definiera två bilder: en med "mitt-prick" och en tom
 const uint32_t LED_ON_FRAME[] = {
     0x0, 
-    0x600600,   // Tänder pixlar i centrum
+    0x600600,   // tänder pixlar i centrum
     0x0
 };
 
 const uint32_t LED_OFF_FRAME[] = {
-    0x0, 0x0, 0x0 // Allt släckt
+    0x0, 0x0, 0x0 // släcker alla pixlar..
 };
 
 
