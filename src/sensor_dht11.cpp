@@ -16,6 +16,8 @@ bool getDHTData() {
     float t = dht.readTemperature();
 
     if (isnan(h) || isnan(t)) {
+        node.sensors.indoorTemp = -127.0;       // error value
+        node.sensors.indoorHumidity = -127.0;   // error value
         return false; 
     }
 

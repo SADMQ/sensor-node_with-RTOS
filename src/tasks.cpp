@@ -72,15 +72,18 @@ void readPrio3Sensors(){
     switch (currentSensor)
     {
     case READING_DHT: 
-        getDHTData();
+        if (getDHTData()){
+            // -- DEBUG --
+            Serial.print("Temp: ");
+            Serial.print(node.sensors.indoorTemp, 1); // 1 decimal
+            Serial.print(" C | Fukt: ");
+            Serial.print(node.sensors.indoorHumidity, 1);
+            Serial.println(" %");
+            // -- DEBUG --
+        } else {
+            Serial.print("<< DHT11 ERROR >>");
+        }
 
-        // -- DEBUG --
-        Serial.print("Temp: ");
-        Serial.print(node.sensors.indoorTemp, 1); // 1 decimal
-        Serial.print(" C | Fukt: ");
-        Serial.print(node.sensors.indoorHumidity, 1);
-        Serial.println(" %");
-        // -- DEBUG --
 
         currentSensor = READING_WATER; 
         break;
