@@ -7,9 +7,8 @@ This repo handles all sensor data for an alarm system, utilizing an Arduino Uno 
 #### Architecture
 -
 
-#### Development : Info / Setup
+#### TO DO → Info / Setup
 
-###### *To do:*
 * Update your WIFI: SSID + Password → plattformio.ini
 * Update your Broker/Zero IP adress → mqtt_client.cpp
 
