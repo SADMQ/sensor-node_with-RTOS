@@ -2,6 +2,7 @@
 #include "alarm.h"
 
 void initReed(){
+    // NOTERA: koppla D3 --> REED --> GND (alt. bara en kabel, när den bryts - triggas larmet)
     pinMode(reedPin, INPUT_PULLUP);
 }
 
