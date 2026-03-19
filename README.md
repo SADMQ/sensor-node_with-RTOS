@@ -15,7 +15,7 @@ The system utilizes Hardware Interrupts for immediate sensor detection and FreeR
 
 1) Update your WIFI: SSID + Password → plattformio.ini
 2) Update your Broker/Zero IP adress → mqtt_client.cpp
-3) When WIFI is missing → solid red light
+3) When WIFI is disconnected → solid red light
 4) When system is up and running → red blink
 5) The system is now sending MQTT when ready!
 
