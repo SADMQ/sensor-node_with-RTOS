@@ -35,53 +35,81 @@ System node = {
 
 
 int checkAlarmStatus(){ 
+
   switch (node.alarmMode)
   {
   case STATE_ARMED_AWAY:
-  //  if (node.sensors.smokeSensor == true || (node.sensors.fireTemp >= DS18B20_ALARMING_TEMP)){
-  //    node.alarmStatus.fireAlarm = true;
-  //    Serial.println("\n--FIRE DETECTED--\n");
-  //  } else {
-  //    node.alarmStatus.fireAlarm = false;
-  //  }
-  //  if (node.sensors.motionDetect == true){
-  //    node.alarmStatus.intrusionAlarm = true;
-  //    Serial.println("\n--MOTION DETECTED--\n");
-  //  }
+    // Reed (door / widnow sensor)
+    if (node.sensors.reedSensor1 == true){
+      node.alarmStatus.intrusionAlarm = true;
+      Serial.println("\n--DOOR/WINDOW DETECTED--\n");
+    }
+
+    // Motion
+    if (node.sensors.motionDetect == true){
+      node.alarmStatus.intrusionAlarm = true;
+      Serial.println("\n--MOTION DETECTED--\n");
+    }
+
+    // Water-leak
     if (node.sensors.waterLeak == true){
       node.alarmStatus.waterLeak = true;
-       Serial.println("\n--WATER-LEAK DETECTED--\n");
+      Serial.println("\n--WATER-LEAK DETECTED--\n");
+    } else {
+      node.alarmStatus.waterLeak = false;
     }
-    return 0;
 
-  case STATE_ARMED_HOME:
+    // Fire
     if (node.sensors.smokeSensor == true || (node.sensors.fireTemp >= DS18B20_ALARMING_TEMP)){
       node.alarmStatus.fireAlarm = true;
       Serial.println("\n--FIRE DETECTED--\n");
     } else {
       node.alarmStatus.fireAlarm = false;
     }
+    
+    return 0;
+
+  case STATE_ARMED_HOME:
+    // Reed (door / widnow sensor)
+        if (node.sensors.reedSensor1 == true){
+      node.alarmStatus.intrusionAlarm = true;
+      Serial.println("\n--DOOR/WINDOW DETECTED--\n");
+    }
+
+    // Water-leak
     if (node.sensors.waterLeak == true){
       node.alarmStatus.waterLeak = true;
-       Serial.println("\n--WATER-LEAK DETECTED--\n");
+      Serial.println("\n--WATER-LEAK DETECTED--\n");
+    } else {
+      node.alarmStatus.waterLeak = false;
+    }
+
+    // Fire
+    if (node.sensors.smokeSensor == true || (node.sensors.fireTemp >= DS18B20_ALARMING_TEMP)){
+      node.alarmStatus.fireAlarm = true;
+      Serial.println("\n--FIRE DETECTED--\n");
+    } else {
+      node.alarmStatus.fireAlarm = false;
     }
     return 0;
 
   case STATE_DISARMED:
+    
+    // Water-leak
+    if (node.sensors.waterLeak == true){
+      node.alarmStatus.waterLeak = true;
+      Serial.println("\n--WATER-LEAK DETECTED--\n");
+    } else {
+      node.alarmStatus.waterLeak = false;
+    }
+
+    // Fire
     if (node.sensors.smokeSensor == true || (node.sensors.fireTemp >= DS18B20_ALARMING_TEMP)){
       node.alarmStatus.fireAlarm = true;
       Serial.println("\n--FIRE DETECTED--\n");
-      } else {
-        node.alarmStatus.fireAlarm = false;
-      }
-      if (node.sensors.waterLeak == true){
-        node.alarmStatus.waterLeak = true;
-         Serial.println("\n--WATER-LEAK DETECTED--\n");
-      }
-      if (node.sensors.indoorHumidity >= 70){  // bara för test
-      Serial.println("\n--HIGH HUMIDITY DETECTED--\n");  // bara för test
-      }
+    } else {
+      node.alarmStatus.fireAlarm = false;
+    }
     return 0;
-
   }
 }

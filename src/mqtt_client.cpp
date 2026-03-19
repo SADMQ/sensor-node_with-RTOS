@@ -5,7 +5,7 @@
 #include <ArduinoJson.h>
 #define MQTT_SEND_TIME 5000             // skicka MQTT varannan sek
 #define MQTT_RECONNECT_TIME 15000       // max reconnect intervall, 30s
-#define MQTT_CONNECTION_TIMEOUT 5000
+#define MQTT_CONNECTION_TIMEOUT 10000
 #define MQTT_HEARTBEAT 10000             // Broker rappoterar OFFLINE efter .. | Testar 10s
 #define BROKER_PORT 1883                // okrypt: 1883 - TLS, krypt: 8883
 #define BROKER_IP "192.168.1.100"

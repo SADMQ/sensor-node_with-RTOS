@@ -22,35 +22,45 @@ void initComponents(){
 }
 
 
-// RTOS: Task - hanterar inbrottslarm (PIR + REED)
+// RTOS: Task - hanterar LARM, inbrott+brand (PIR+REED + GAS+TEMP)
 // Händelsestyrd
 void vAlarmTask(void *Params){
     // allt här körs EN gång
     for (;;){
-        // väntar på given semafor - dvs. ett HW-interrupt ... 
-        if (xSemaphoreTake(xAlarmSemaphore, portMAX_DELAY) == pdPASS){
+        // väntar på given semafor - dvs. ett HW-interrupt, ELLER timeout 
+        BaseType_t xResult = xSemaphoreTake(xAlarmSemaphore, portMAX_DELAY); // timeout för checka brandlarm.. 2s? Verkar sänka mqtt..
 
-            // Addera: READING_DS18B20 , vid hög temp larma - ENDAST denna går på tidsintevall.
-
-            if (node.alarmMode == STATE_ARMED_AWAY && node.sensors.HWEvent_motionDetect){
+            if (xResult == pdPASS){
+                if (node.sensors.HWEvent_motionDetect){
                 node.sensors.motionDetect = true;
                 // add trigger-time ?
-                xSemaphoreGive(xNetworkSemaphore);
-            }
+                // BLE eller MQTT? - MQTT för lagring?
+                node.sensors.HWEvent_motionDetect = false;
+                }
 
-            if ((node.alarmMode == STATE_ARMED_AWAY || node.alarmMode == STATE_ARMED_HOME) && node.sensors.HWEvent_reedSensor1){
+                if (node.sensors.HWEvent_reedSensor1){
                 node.sensors.reedSensor1 = true;
                 // add trigger-time ?
+                // BLE eller MQTT? - MQTT för lagring?
+                node.sensors.HWEvent_reedSensor1 = false;
+                }
+                checkAlarmStatus();
                 xSemaphoreGive(xNetworkSemaphore);
+                
+            } else {
+                // går ENDAST på tidsintevall - oberoende semaphore, ~2000ms. --- OBS, avstängt nu.
+                getDS18B20data();
+                checkAlarmStatus();
+                if (node.alarmStatus.fireAlarm){
+                    xSemaphoreGive(xNetworkSemaphore);
+                }
             }
+        
+        vTaskDelay(pdMS_TO_TICKS(20)); // pausa inte denna.
+    }
+}   
 
-            node.sensors.HWEvent_reedSensor1 = false;
-            node.sensors.HWEvent_motionDetect = false;
-        }
-        vTaskDelay(pdMS_TO_TICKS(20)); // pausa task, 20ms
-    }   
-    
-}
+
 
 // RTOS: Task - hanterar nätverk -> WIFI, MQTT & (BLE..)
 // Händelsestyrd & tidsstyrd
@@ -72,7 +82,6 @@ void vNetworkTask(void *Params){
             manageMQTT();
         }            
     }
-        vTaskDelay(pdMS_TO_TICKS(500)); // pausa task, 500ms
 }
 
 // RTOS: Task - hanterar låg prio sensorer & status LED
@@ -87,6 +96,10 @@ void vSystemMonitorTask(void *Params){
         if (node.sysTime - lastRead_LowPrioSensors >= LOW_PRIO_SENSORS_READ){
             readLowPrioSensors();
             lastRead_LowPrioSensors = node.sysTime;
+
+            if (node.sensors.waterLeak == true){
+                checkAlarmStatus();
+            }
             xSemaphoreGive(xNetworkSemaphore);
         }
         // pausa tasken i 100ms för ge space för andra tasks.
@@ -108,6 +121,7 @@ int readPrio2Sensors(){
 
         
     case READING_MQ2:
+        Serial.println("Checking 'Smoke-sensor'..\n"); 
         //läs smoke sensor
         currentSensor = READING_DS18B20; 
         return 0;

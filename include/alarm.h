@@ -7,7 +7,7 @@ extern SemaphoreHandle_t xAlarmSemaphore;
 extern SemaphoreHandle_t xNetworkSemaphore;
 extern SemaphoreHandle_t xSystemMonitorSemaphore;
 
-// PRIO-1 pins to monitor (HW interrupt)
+// HIGH PRIO pins to monitor (HW interrupt)
 const int reedPin = 3;
 const int pirPin = 4;
 
