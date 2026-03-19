@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "Arduino_FreeRTOS.h"
 #include "alarm.h"
 
 void initReed(){
@@ -6,9 +7,16 @@ void initReed(){
     pinMode(reedPin, INPUT_PULLUP);
 }
 
+// indikera ATT vi triggat
 void reedIsTriggerd(){
-    if (node.alarmMode != STATE_DISARMED){
-        node.sensors.reedSensor1 = true;
-        // add trigger-time ?
-    }
+    // Initierar variabel (för prio-besked ifrån RTOS)
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+    node.sensors.HWEvent_reedSensor1 = true;
+
+    // Flagga semaforen och lagrar prio-svaret. 
+    xSemaphoreGiveFromISR(xAlarmSemaphore, &xHigherPriorityTaskWoken);
+
+    // Tvinga RTOS byta task omedelbart, om prio är högre.
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }

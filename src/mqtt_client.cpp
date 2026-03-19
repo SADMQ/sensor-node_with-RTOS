@@ -3,10 +3,10 @@
 #include "wifi_manager.h"
 #include <ArduinoMqttClient.h>
 #include <ArduinoJson.h>
-#define MQTT_SEND_TIME 2000             // skicka MQTT varannan sek
-#define MQTT_RECONNECT_TIME 30000       // max reconnect intervall, 30s
-#define MQTT_CONNECTION_TIMEOUT 1000
-#define MQTT_HEARTBEAT 3000             // Broker rappoterar OFFLINE efter ~ 4s
+#define MQTT_SEND_TIME 5000             // skicka MQTT varannan sek
+#define MQTT_RECONNECT_TIME 15000       // max reconnect intervall, 30s
+#define MQTT_CONNECTION_TIMEOUT 5000
+#define MQTT_HEARTBEAT 10000             // Broker rappoterar OFFLINE efter ~ 4s | Testar 10s
 #define BROKER_PORT 1883                // okrypt: 1883 - TLS, krypt: 8883
 #define BROKER_IP "192.168.1.100"
 
@@ -26,30 +26,30 @@ bool willRetain                  = true;
 int willQos                      = 1;
 
 //bool tryMQTTconnect = false;
-unsigned long MQTTConnectTimer = 0;
+unsigned long MQTTConnectTimer = 15000;
 unsigned long MQTTLastSendTimer = 0;
-
-
-// OBS! "RECONNECT" ÄR INTE IMPLEMENTERAT ÄNNU
-// mqttClient.conected() låser systemet under flera sek.. bör bara ske när vi är avlarmade,
-// om vi inte hittar något sätt att connecta snabbare.
-
 
 int manageMQTT() {
 
-    // testamente
-    mqttClient.beginWill(willTopic, willRetain, willQos);
-    mqttClient.print(willPayload);
-    mqttClient.endWill();
+    if (node.connectionStatus.mqttIsActive){
+        sendMQTT();
+        receiveMQTT();
+    }
 
-    // mqtt settings
-    mqttClient.setKeepAliveInterval(MQTT_HEARTBEAT);
-    mqttClient.setConnectionTimeout(MQTT_CONNECTION_TIMEOUT);
-
-    if ((node.sysTime - MQTTConnectTimer >= MQTT_RECONNECT_TIME) && (!node.connectionStatus.mqttIsActive) ){ 
+    if ((node.sysTime - MQTTConnectTimer >= MQTT_RECONNECT_TIME) && (!mqttClient.connected()) ){  // prova ersätta: node.connectionStatus.mqttIsActive
         MQTTConnectTimer = node.sysTime;
             
+        // testamente
+        mqttClient.beginWill(willTopic, willRetain, willQos);
+        mqttClient.print(willPayload);
+        mqttClient.endWill();
+
+        // mqtt settings
+        mqttClient.setKeepAliveInterval(MQTT_HEARTBEAT);
+        mqttClient.setConnectionTimeout(MQTT_CONNECTION_TIMEOUT);
+
         if (mqttClient.connect(broker, port)) { 
+            Serial.println("\n<< MQTT : Connecting.. >>\n");
             node.connectionStatus.mqttIsActive = true;
             initSendMQTT();
             return true;
@@ -58,14 +58,8 @@ int manageMQTT() {
             node.connectionStatus.mqttIsActive = false;
             Serial.println("\n<< MQTT : Connect error >> Try reconnect..\n");
             return false;
-
         }
     } 
-
-    if (node.connectionStatus.mqttIsActive){
-        sendMQTT();
-        receiveMQTT();
-    }
 }
 
 void initSendMQTT(){
@@ -114,12 +108,10 @@ void sendMQTT(){
             // skicka releveant larm
         } 
     }
-        // c) skicka heartbeat var 30e sek (bra trots LWT)
     }
 }
 
 void receiveMQTT(){
-
 
     // TA EMOT data (sub) från ESP -> "state"
 }

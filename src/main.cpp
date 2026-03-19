@@ -1,33 +1,38 @@
 #include <Arduino.h>
-#include "scheduler.h"
-#include "sensor_dht11.h"
+#include <Arduino_FreeRTOS.h>
 #include "tasks.h"
 #include "alarm.h"
-#include "sensor_reed.h"
-#include "sensor_motion.h"
-#include <ArduinoBLE.h>
 
-extern "C" void SysTick_Handler(){
-  node.sysTime++;
-}
+SemaphoreHandle_t xAlarmSemaphore;
+SemaphoreHandle_t xSystemMonitorSemaphore;
+SemaphoreHandle_t xNetworkSemaphore;
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial); 
+  delay(2000); // while? behövs?
   initComponents();
+  Serial.println("--- STARTING SYSTEM ---");
 
-  // prio 1 sensors - HW interrupt 
-  attachInterrupt(digitalPinToInterrupt(reedPin), reedIsTriggerd , RISING);
-  attachInterrupt(digitalPinToInterrupt(pirPin), motionIsDetected , RISING);
+  //xAlarmSemaphore = xSemaphoreCreateBinary();
+  xSystemMonitorSemaphore = xSemaphoreCreateBinary();
+  xNetworkSemaphore = xSemaphoreCreateBinary();
 
-  // sysTick - starta HW klockan (& systick_handler)
-  SysTick_Config(SystemCoreClock / 1000);
+  //xTaskCreate(vAlarmTask, "ALARM", 128, NULL, 3, NULL);
+  xTaskCreate(vSystemMonitorTask, "MONITOR", 512, NULL, 2, NULL);
+  xTaskCreate(vNetworkTask, "NETWORK", 1024, NULL, 1, NULL);
+
+  Serial.println("Starting FreeRTOS Scheduler...");
+  
+  // 3. STARTA SKEDULERAREN MANUELLT (Kritiskt för R4)
+  vTaskStartScheduler();
+
+  // Om vi når hit har något gått snett
+  Serial.println("Insufficient RAM to start Scheduler!");
 }
 
-void loop() { 
-  startingSystem();
-  
-  if (node.runStatus == RUNNING){
-    taskScheduler(); 
-  }
+void loop() {
+}
+
+extern "C" void vApplicationTickHook(void) {
+  node.sysTime++;
 }

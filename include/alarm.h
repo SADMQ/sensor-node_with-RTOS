@@ -1,11 +1,20 @@
 #ifndef ALARM_H
 #define ALARM_H
+#include <Arduino_FreeRTOS.h> // testa om det behövs, annars ersätt med Arduino_FreeRTOS.h
+
+// RTOS semaphore för larm
+extern SemaphoreHandle_t xAlarmSemaphore;
+extern SemaphoreHandle_t xNetworkSemaphore;
+extern SemaphoreHandle_t xSystemMonitorSemaphore;
 
 // PRIO-1 pins to monitor (HW interrupt)
 const int reedPin = 3;
 const int pirPin = 4;
 
 int checkAlarmStatus();
+void vAlarmTask(void *Params);
+void vNetworkTask(void *Params);
+void vSystemMonitorTask(void *Params);
 
 typedef enum
 {
@@ -31,8 +40,10 @@ typedef struct {
 typedef struct {
     // Alarm (prio 1)
     volatile bool reedSensor1; // volatile: tvingar cpu att läsa variablen från RAM, för att få en 100% korrekt status.
-    volatile bool reedSensor2;
+    volatile bool HWEvent_reedSensor1;
     volatile bool motionDetect;
+    volatile bool HWEvent_motionDetect;
+    
 
     // Fire (prio 2)
     bool smokeSensor;
@@ -60,7 +71,7 @@ typedef struct
 {
     RunStatus runStatus;       // WAKING_UP (ca 60 s) | RUNNING
     ConnectionStatus connectionStatus; // WiFi Active? | BLE Active?
-    AlarmMode alarmMode;       // Disarmed | Armed home | Armed away
+    AlarmMode alarmMode;       // STATE_DISARMED | STATE_ARMED_HOME | STATE_ARMED_AWAY
     AlarmReason alarmStatus;   // intrusionAlarm | fireAlarm | waterLeak | systemFailure
     SensorData sensors;         // all sensordata
     volatile unsigned long sysTime;      // System-tiden

@@ -21,8 +21,9 @@ System node = {
   },
   .sensors = {
     .reedSensor1 = false,
-    .reedSensor2 = false,
+    .HWEvent_reedSensor1 = false,
     .motionDetect = false,
+    .HWEvent_motionDetect = false,
     .smokeSensor = false,
     .fireTemp = 0.0,
     .indoorTemp = 0.0,
@@ -37,20 +38,16 @@ int checkAlarmStatus(){
   switch (node.alarmMode)
   {
   case STATE_ARMED_AWAY:
-    if (node.sensors.smokeSensor == true || (node.sensors.fireTemp >= DS18B20_ALARMING_TEMP)){
-      node.alarmStatus.fireAlarm = true;
-      Serial.println("\n--FIRE DETECTED--\n");
-    } else {
-      node.alarmStatus.fireAlarm = false;
-    }
-    if (node.sensors.motionDetect == true){
-      node.alarmStatus.intrusionAlarm = true;
-      Serial.println("\n--MOTION DETECTED--\n");
-    }
-    if (node.sensors.reedSensor1 == true || node.sensors.reedSensor2 == true){
-      node.alarmStatus.intrusionAlarm = true;
-      Serial.println("\n--DOOR/WINDOW OPEND!--\n");
-    }
+  //  if (node.sensors.smokeSensor == true || (node.sensors.fireTemp >= DS18B20_ALARMING_TEMP)){
+  //    node.alarmStatus.fireAlarm = true;
+  //    Serial.println("\n--FIRE DETECTED--\n");
+  //  } else {
+  //    node.alarmStatus.fireAlarm = false;
+  //  }
+  //  if (node.sensors.motionDetect == true){
+  //    node.alarmStatus.intrusionAlarm = true;
+  //    Serial.println("\n--MOTION DETECTED--\n");
+  //  }
     if (node.sensors.waterLeak == true){
       node.alarmStatus.waterLeak = true;
        Serial.println("\n--WATER-LEAK DETECTED--\n");
@@ -63,10 +60,6 @@ int checkAlarmStatus(){
       Serial.println("\n--FIRE DETECTED--\n");
     } else {
       node.alarmStatus.fireAlarm = false;
-    }
-    if (node.sensors.reedSensor1 == true || node.sensors.reedSensor2 == true){
-      node.alarmStatus.intrusionAlarm = true;
-      Serial.println("\n--DOOR/WINDOW OPEND!--\n");
     }
     if (node.sensors.waterLeak == true){
       node.alarmStatus.waterLeak = true;

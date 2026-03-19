@@ -19,7 +19,7 @@ enum SensorStateP1 {
 };
 
 void initComponents();
-int readPrio3Sensors();
+int readLowPrioSensors();
 int readPrio2Sensors();
 int readPrio1Sensors();
 

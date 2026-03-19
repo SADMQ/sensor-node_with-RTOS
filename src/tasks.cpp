@@ -10,20 +10,94 @@
 #include "mqtt_client.h"
 #include "sensor_motion.h"
 #include "sensor_reed.h"
-#define numOfPrio3Sensors 2
+#include "scheduler.h"
+#define LOW_PRIO_SENSORS_READ 5000 // 30s (TEST: 5s)
 
 void initComponents(){
-    initWiFi();
     initDHT();
-    initDS18B20();
-    initPIR();
+    //initDS18B20();
+    //initPIR();
     initReed();
     initMatrix();
 }
 
+
+// RTOS: Task - hanterar inbrottslarm (PIR + REED)
+// Händelsestyrd
+void vAlarmTask(void *Params){
+    // allt här körs EN gång
+    for (;;){
+        // väntar på given semafor - dvs. ett HW-interrupt
+        if (xSemaphoreTake(xAlarmSemaphore, portMAX_DELAY) == pdPASS){
+
+            if (node.alarmMode == STATE_ARMED_AWAY && node.sensors.HWEvent_motionDetect){
+                node.sensors.motionDetect = true;
+                // add trigger-time ?
+                xSemaphoreGive(xNetworkSemaphore);
+            }
+
+            if ((node.alarmMode == STATE_ARMED_AWAY || node.alarmMode == STATE_ARMED_HOME) && node.sensors.HWEvent_reedSensor1){
+                node.sensors.reedSensor1 = true;
+                // add trigger-time ?
+                xSemaphoreGive(xNetworkSemaphore);
+            }
+
+            node.sensors.HWEvent_reedSensor1 = false;
+            node.sensors.HWEvent_motionDetect = false;
+        }
+        vTaskDelay(pdMS_TO_TICKS(20)); // pausa task, 20ms
+    }   
+    
+}
+
+// RTOS: Task - hanterar nätverk -> WIFI, MQTT & (BLE..)
+// Händelsestyrd & tidsstyrd
+void vNetworkTask(void *Params){
+    // körs bara EN gång
+    Serial.println("Wifi Init..");
+    initWiFi();
+    Serial.println("Wifi Init: Complete!");
+
+    for (;;){
+
+        // väntar här - vaknar av semaphore ELLER timeout
+        BaseType_t xResult = xSemaphoreTake(xNetworkSemaphore, pdMS_TO_TICKS(5000));
+
+        // körs ALLTID när loopen vaknar;
+        manageWiFi();
+        //manageBLE();
+        if (wifiIsConnected()){
+            manageMQTT();
+        }            
+    }
+        vTaskDelay(pdMS_TO_TICKS(500)); // pausa task, 500ms
+}
+
+// RTOS: Task - hanterar låg prio sensorer & status LED
+// Tidsstyrd
+void vSystemMonitorTask(void *Params){
+    // Allt här körs EN gång
+    Serial.println("Monitor Task Started!");
+    uint32_t lastRead_LowPrioSensors = 0;
+
+    for (;;){
+        statusLED();
+
+        if (node.sysTime - lastRead_LowPrioSensors >= LOW_PRIO_SENSORS_READ){
+            readLowPrioSensors();
+            lastRead_LowPrioSensors = node.sysTime;
+            xSemaphoreGive(xNetworkSemaphore);
+        }
+        // pausa tasken i 100ms för ge space för andra tasks.
+        vTaskDelay(pdMS_TO_TICKS(100)); // pausa task, 100ms
+    }
+    
+}
+
+
+// --- bör flyttas till RTOS "ALARM"-task --- å tas bort här
 int readPrio2Sensors(){
     static int currentSensor = READING_DS18B20; // static -> sätts endast EN gång (init)
-    // för att minimiera jitter för "låg-prio" sensorer - läs asynkront, en sensor åt gången.
     switch (currentSensor)
     {
     case READING_DS18B20: 
@@ -39,33 +113,21 @@ int readPrio2Sensors(){
     }
 };
 
-int readPrio3Sensors(){
+
+int readLowPrioSensors(){
     static int currentSensor = READING_DHT; // static -> sätts endast EN gång (init)
-    // för att minimiera jitter för "låg-prio" sensorer - läs asynkront, en sensor åt gången.
-    switch (currentSensor)
-    {
-    case READING_DHT: 
-        if (getDHTData()){
-            // -- DEBUG --
-            Serial.print("DHT11: ");
-            Serial.print(node.sensors.indoorTemp, 1); // 1 decimal
-            Serial.print(" °C | Humidity: ");
-            Serial.print(node.sensors.indoorHumidity, 1);
-            Serial.println(" %");
-            // -- DEBUG --
-        } else {
-            Serial.print("<< DHT11 ERROR >>");
-        }
 
-
-        currentSensor = READING_WATER; 
-        return 0;
-
-        
-    case READING_WATER:
-        //läs water leak
-        Serial.println("Checking 'Water-Leak'..\n"); 
-        currentSensor = READING_DHT;
-        return 0;
+    if (getDHTData()){
+        Serial.print("DHT11: ");
+        Serial.print(node.sensors.indoorTemp, 1); // En decimal
+        Serial.print(" °C | Humidity: ");
+        Serial.print(node.sensors.indoorHumidity, 1);
+        Serial.println(" %");
+    } else {
+        Serial.print("<< DHT11 ERROR >>");
     }
-};
+
+
+    Serial.println("Checking 'Water-Leak'..\n"); 
+    // kolla water leak sensorn här..
+}
