@@ -42,9 +42,10 @@ The system utilizes Hardware Interrupts for immediate sensor detection and FreeR
 
 #### Mode Info
 
-* MQTT
+* *MQTT*
   * MQTT is set every 30s
   * Sending sensor values & Online/Offline status (LWT & heartbeat) 
 
-* RTC (Time stamp)
-* Every alarm event has an time stamp 
+* *RTC (Time stamp)*
+  * The clock is synchronized via WiFi on startup
+  * Every alarm event has an time stamp
