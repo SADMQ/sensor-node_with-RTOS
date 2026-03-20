@@ -11,11 +11,6 @@ The system utilizes Hardware Interrupts for immediate sensor detection and FreeR
 * Priority 2 (Medium): System monitoring (Temp/Water/LED).
 * Priority 1 (Low): Network communication (WiFi/MQTT).
 
-#### Comminucation
-
-* MQTT is set every 30s
-* Low prio sensors are redd every 5s
-
 #### Setup - Info
 
 1) Update your WIFI: SSID + Password → plattformio.ini
@@ -28,7 +23,7 @@ The system utilizes Hardware Interrupts for immediate sensor detection and FreeR
 
 * Implement & integrate other sensors (MQ2, PIR, Water-leak)
 * BLE comminucation
-* 
+* JSON .. ? 
 
 #### Hardware
 * MCU: Arduino Uno R4 WiFi
@@ -43,3 +38,13 @@ The system utilizes Hardware Interrupts for immediate sensor detection and FreeR
 | Rain-sensor   | Water leak                    |  -            | *(Broker @ MQTT)*  |              |                     |
 | PIR           | Motion                        | D4 (P106)     | *(ESP32 @ BLE)*    |              | Yes                 |
 | Reed          | Open door or window           | D3 (P105)     | *(ESP32 @ BLE)*    | Yes          | Yes                 |
+
+
+#### Mode Info
+
+* MQTT
+  * MQTT is set every 30s
+  * Sending sensor values & Online/Offline status (LWT & heartbeat) 
+
+* RTC (Time stamp)
+* Every alarm event has an time stamp 
