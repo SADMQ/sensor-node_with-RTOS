@@ -1,4 +1,6 @@
 #include "Arduino_LED_Matrix.h"
+#include <Arduino_FreeRTOS.h>
+#include "indicateStatus.h"
 #include "alarm.h"
 #include "wifi_manager.h"
 ArduinoLEDMatrix matrix;
@@ -14,6 +16,7 @@ typedef struct{
 }LedFrame;
 
 const LedFrame LED_ON_FRAME = { 0x0, 0x600600, 0x0};
+const LedFrame LED_FULL_ON = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
 const LedFrame LED_OFF_FRAME = { 0x0, 0x0, 0x0 };
 
 
@@ -21,18 +24,38 @@ void initMatrix(){
     matrix.begin();
 }
 
-int statusLED(){
-    if (!ledActive && (node.sysTime - ledClock >= LED_OFF_TIME)){
-        matrix.loadFrame(LED_ON_FRAME.data);
-        ledActive = true;
-        ledClock = node.sysTime;
-    }
-
-    if ((ledActive && (node.sysTime - ledClock >= LED_ON_TIME) && node.connectionStatus.wifiIsActive)){
+int statusLED(bool alarming){
+    // släck alla leds
+    if (ledActive){
         matrix.loadFrame(LED_OFF_FRAME.data);
         ledActive = false;
-        ledClock = node.sysTime;
+        return 0;
+    }
+    
+
+    if (!ledActive){
+    // tänd status-leds
+        if (alarming){
+            matrix.loadFrame(LED_FULL_ON.data);
+        } else {
+            matrix.loadFrame(LED_ON_FRAME.data);
+        }
+        ledActive = true;
+    }
+    return 1;
+}
+
+void vLEDTimerCallback(TimerHandle_t xTimer){
+    if (!node.connectionStatus.wifiIsActive && !node.connectionStatus.mqttIsActive){
+        xTimerChangePeriod(xLEDTimer, pdMS_TO_TICKS(200), 0);
+    } else {
+        xTimerChangePeriod(xLEDTimer, pdMS_TO_TICKS(1000), 0);
+    }
+    
+    if (node.alarmStatus.intrusionAlarm || node.alarmStatus.fireAlarm) {
+        statusLED(1);
+        return;
     }
 
-    return 0;
+    statusLED(0);
 }

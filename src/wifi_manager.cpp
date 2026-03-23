@@ -1,5 +1,6 @@
 #include <WiFiS3.h>
 #include "alarm.h"
+#include "indicateStatus.h"
 
 // kolla om vi är anslutan till wifi
 // retunerar true om connected.

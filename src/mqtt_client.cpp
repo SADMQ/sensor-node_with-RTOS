@@ -2,7 +2,8 @@
 #include "mqtt_client.h"
 #include "wifi_manager.h"
 #include <ArduinoMqttClient.h>
-#include <ArduinoJson.h>
+//#include <ArduinoJson.h> - används inte ännu..
+#include "indicateStatus.h"
 #define MQTT_SEND_TIME 30000            // Hur ofta ska vi skicka mqtt.. Testar: 30s
 #define MQTT_RECONNECT_TIME 15000       // max reconnect intervall, Testar: 15s
 #define MQTT_CONNECTION_TIMEOUT 10000   

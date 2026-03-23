@@ -99,21 +99,14 @@ void vNetworkTask(void *Params){
 // Tidsstyrd
 void vSystemMonitorTask(void *Params){
     // Allt här körs EN gång
-    uint32_t lastRead_LowPrioSensors = 0;
 
     for (;;){
-        statusLED();
+        readLowPrioSensors();
+        getDS18B20data();   // För brandlarm - bör ev. flyttas till Alarm Task med högre prio? (men stör MQTT-connection om de körs där nu pg.a one-wire??)
+        checkAlarmStatus();            
+        xSemaphoreGive(xNetworkSemaphore);
 
-        if (node.sysTime - lastRead_LowPrioSensors >= LOW_PRIO_SENSORS_READ){
-            readLowPrioSensors();
-            lastRead_LowPrioSensors = node.sysTime;
-            
-            getDS18B20data();   // För brandlarm - bör ev. flyttas till Alarm Task med högre prio? (men stör MQTT-connection om de körs där nu pg.a one-wire??)
-            checkAlarmStatus();            
-            xSemaphoreGive(xNetworkSemaphore);
-        }
-        // pausa tasken i 100ms för ge space för andra tasks.
-        vTaskDelay(pdMS_TO_TICKS(100)); // pausa task, 100ms
+        vTaskDelay(pdMS_TO_TICKS(30000)); // pausa task, 30s
     }
 }
 

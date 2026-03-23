@@ -4,16 +4,23 @@
 #include "alarm.h"
 #include "sensor_motion.h"
 #include "sensor_reed.h"
+#include "indicateStatus.h"
 
 SemaphoreHandle_t xAlarmSemaphore;
 SemaphoreHandle_t xSystemMonitorSemaphore;
 SemaphoreHandle_t xNetworkSemaphore;
+TimerHandle_t xLEDTimer;
 
 void setup() {
   Serial.begin(115200);
   while(!Serial);
   initComponents();
   Serial.println("--- STARTING SYSTEM ---");
+
+  // skapa timer
+  xLEDTimer = xTimerCreate("LED_STATUS", pdMS_TO_TICKS(750), pdTRUE, 0, vLEDTimerCallback);
+  // starta timer
+  xTimerStart(xLEDTimer, 0);
 
   xAlarmSemaphore = xSemaphoreCreateBinary();
   xSystemMonitorSemaphore = xSemaphoreCreateBinary();
