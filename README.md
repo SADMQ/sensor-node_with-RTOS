@@ -10,7 +10,7 @@ The system utilizes Hardware Interrupts for immediate sensor detection and FreeR
 * Priority 3 (High): Critical alarm events (PIR/Reed/MQ2/DS18B20) via hardware interrupts & semaphores.
 * Priority 2 (Medium): System monitoring (Temp/Water leak).
 * Priority 1 (Low): Network communication (WiFi/MQTT/BLE).
-* Software Timer: A a real-time LED status indication, without the memory cost of a dedicated task.
+* Software Timer: Used for a real-time LED status indication, without the memory cost of a dedicated task.
 
 #### Setup - Info
 
