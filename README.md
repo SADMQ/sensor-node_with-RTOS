@@ -28,7 +28,6 @@ The system utilizes Hardware Interrupts for immediate sensor detection and FreeR
 #### Upcomming
 
 * Implement & integrate other sensors (MQ2, PIR, Water-leak)
-* BLE comminucation
 * JSON .. ? 
 
 #### Hardware
@@ -47,6 +46,9 @@ The system utilizes Hardware Interrupts for immediate sensor detection and FreeR
 
 
 #### Mode Info
+
+* *BLE*
+  * BLE "dummy" messages are now sent every 5s (counter)
 
 * *MQTT*
   * MQTT is sent every 30s
