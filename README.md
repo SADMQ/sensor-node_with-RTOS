@@ -7,9 +7,10 @@ This repository manages sensor data for an alarm system running on an Arduino Un
 #### Architecture - Interrupts & RTOS
 
 The system utilizes Hardware Interrupts for immediate sensor detection and FreeRTOS for task orchestration and Binary Semaphores.
-* Priority 3 (High): Critical alarm events (PIR/Reed) via hardware interrupts & semaphores.
-* Priority 2 (Medium): System monitoring (Temp/Water/LED).
-* Priority 1 (Low): Network communication (WiFi/MQTT).
+* Priority 3 (High): Critical alarm events (PIR/Reed/MQ2/DS18B20) via hardware interrupts & semaphores.
+* Priority 2 (Medium): System monitoring (Temp/Water leak).
+* Priority 1 (Low): Network communication (WiFi/MQTT/BLE).
+* Software Timer: A a real-time LED status indication, without the memory cost of a dedicated task.
 
 #### Setup - Info
 
