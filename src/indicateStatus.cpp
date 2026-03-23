@@ -49,7 +49,7 @@ void vLEDTimerCallback(TimerHandle_t xTimer){
     if (!node.connectionStatus.wifiIsActive && !node.connectionStatus.mqttIsActive){
         xTimerChangePeriod(xLEDTimer, pdMS_TO_TICKS(200), 0);
     } else {
-        xTimerChangePeriod(xLEDTimer, pdMS_TO_TICKS(1000), 0);
+        xTimerChangePeriod(xLEDTimer, pdMS_TO_TICKS(idleLEDSpeed), 0);
     }
     
     if (node.alarmStatus.intrusionAlarm || node.alarmStatus.fireAlarm) {
