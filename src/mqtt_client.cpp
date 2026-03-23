@@ -50,14 +50,14 @@ int manageMQTT() {
         //mqttClient.setConnectionTimeout(MQTT_CONNECTION_TIMEOUT);
 
         if (mqttClient.connect(broker, port)) { 
-            Serial.println("\n<< MQTT : Connecting.. >>\n");
+            Serial.println("\nMQTT: Connecting..\n");
             node.connectionStatus.mqttIsActive = true;
             initSendMQTT();
             return true;
 
         } else {
             node.connectionStatus.mqttIsActive = false;
-            Serial.println("\n<< MQTT : Connect error >> Try reconnect..\n");
+            Serial.println("\nMQTT: Connect error - reconnecting..\n");
             return false;
         }
     } 
@@ -80,13 +80,13 @@ void sendMQTT(){
         mqttClient.beginMessage(indoorTempTopic,false, 0,false); // QoS = 0
         mqttClient.print(node.sensors.indoorTemp);
         if (mqttClient.endMessage()) {
-            Serial.println("\nTemp: Sent!");
+            Serial.println("\nMQTT: Temp - Sent!");
         } 
 
         mqttClient.beginMessage(indoorHumidTopic,false, 0,false);
         mqttClient.print(node.sensors.indoorHumidity);
         if (mqttClient.endMessage()) {
-            Serial.println("Humidity: Sent!\n");
+            Serial.println("MQTT: Humidity - Sent!\n");
         } 
 
         if (node.alarmStatus.fireAlarm){
@@ -94,14 +94,14 @@ void sendMQTT(){
             mqttClient.print(node.sensors.fireTemp);
             mqttClient.print(node.sensors.smokeSensor);
             if (mqttClient.endMessage()) {
-                Serial.println("\nFire: Sent!\n");
+                Serial.println("\nMQTT: Fire - Sent!\n");
         } 
 
         if (node.alarmStatus.waterLeak){
             mqttClient.beginMessage(waterleakTopic,false, 0,false);
             mqttClient.print(node.sensors.waterLeak);
             if (mqttClient.endMessage()) {
-                Serial.println("\nWater: Sent!\n");
+                Serial.println("\nMQTT: Water - Sent!\n");
             } 
         }
 

@@ -21,7 +21,7 @@ void initDS18B20() {
     ds18b20.begin(); // startsekvensen
     // AVAKTIVERA väntetiden (gör den non-blocking)
     ds18b20.setWaitForConversion(false); 
-    Serial.println("DS18B20 Initierad");
+    Serial.println("DS18B20: Initierad");
 }
 
 void getDS18B20data(){

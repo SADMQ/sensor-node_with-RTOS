@@ -11,11 +11,12 @@
 #include "mqtt_client.h"
 #include "sensor_motion.h"
 #include "sensor_reed.h"
-//#include "scheduler.h"
+#include "ble_manager.h"
 #define LOW_PRIO_SENSORS_READ 2000 //  (TEST: 2s)
 
 void initComponents(){
     RTC.begin();
+    initBLE();
     initDHT();
     initDS18B20();
     //initPIR();
@@ -29,7 +30,7 @@ int initTime(){
   if (epoch != 0) {
     RTCTime startTime(epoch);
     RTC.setTime(startTime); // Nu är klockan ställd!
-    Serial.println("Clock synchronized!");
+    Serial.println("RTC: Clock synchronized!");
     return true;
   }
   return false;
@@ -73,7 +74,8 @@ void vNetworkTask(void *Params){
     // körs bara EN gång
     bool timeIsSet = false;
     initWiFi();
-    Serial.println("Wifi Init: Complete!");
+    Serial.println("WiFi: Init - Complete!");
+    initBLE();
 
     for (;;){
         // väntar här - vaknar av semaphore ELLER timeout
@@ -81,7 +83,7 @@ void vNetworkTask(void *Params){
         
         // körs ALLTID när loopen vaknar;
         manageWiFi();
-        //manageBLE();
+        manageBLE(); // TESTAR .. 
         if (wifiIsConnected()){
             manageMQTT();
             if (!timeIsSet){
@@ -101,7 +103,6 @@ void vSystemMonitorTask(void *Params){
 
     for (;;){
         readLowPrioSensors();
-        //getDS18B20data();   // För brandlarm - bör ev. flyttas till Alarm Task med högre prio? (men stör MQTT-connection om de körs där nu pg.a one-wire??)
         checkAlarmStatus();            
         xSemaphoreGive(xNetworkSemaphore);
 
@@ -120,10 +121,10 @@ int readLowPrioSensors(){
         Serial.print(node.sensors.indoorHumidity, 1);
         Serial.println(" %");
     } else {
-        Serial.print("<< DHT11 ERROR >>");
+        Serial.print("DHT11: ERROR");
     }
 
 
-    Serial.println("Checking 'Water-Leak'..\n"); 
+    Serial.println("WL: No water leak..\n"); 
     // kolla water leak sensorn här..
 }

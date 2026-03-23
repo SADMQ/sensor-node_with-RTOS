@@ -7,7 +7,7 @@ DHT dht(DHT_PIN, DHT_TYPE, 6);
 
 void initDHT() {
     dht.begin(); // startsekvensen
-    Serial.println("DHT Initierad");
+    Serial.println("DHT11: Initierad");
     // node.dhtReady = true;
 }
 
