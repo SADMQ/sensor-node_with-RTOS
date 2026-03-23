@@ -30,9 +30,9 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(reedPin), reedIsTriggerd, RISING);
   attachInterrupt(digitalPinToInterrupt(pirPin), motionIsDetected, RISING);
 
-  xTaskCreate(vAlarmTask, "ALARM", 128, NULL, 3, NULL);
-  xTaskCreate(vSystemMonitorTask, "MONITOR", 512, NULL, 2, NULL);
-  xTaskCreate(vNetworkTask, "NETWORK", 1024, NULL, 1, NULL);
+  xTaskCreate(vAlarmTask, "ALARM", 192, NULL, 3, NULL); // OBS! Kan behöva ökas när vi ökar antal sensorer här.
+  xTaskCreate(vSystemMonitorTask, "MONITOR", 192, NULL, 2, NULL);
+  xTaskCreate(vNetworkTask, "NET", 1024, NULL, 1, NULL);
   
   vTaskStartScheduler();
 }

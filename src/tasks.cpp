@@ -40,30 +40,30 @@ int initTime(){
 void vAlarmTask(void *Params){
     // allt här körs EN gång
     for (;;){
-        // väntar på given semafor - dvs. ett HW-interrupt, ELLER timeout 
-        BaseType_t xResult = xSemaphoreTake(xAlarmSemaphore, portMAX_DELAY); // DS18B20 här, verkar sänka mqtt.. one-wire?
+        // väntar på given semafor - dvs. ett HW-interrupt, 
+        BaseType_t xResult = xSemaphoreTake(xAlarmSemaphore, pdMS_TO_TICKS(2000)); // portMAX_DELAY - DS18B20 här, verkar sänka mqtt.. one-wire?
 
             if (xResult == pdPASS){
                 if (node.sensors.HWEvent_motionDetect){
                 node.sensors.motionDetect = true;
-                // add trigger-time ?
                 // BLE eller MQTT? - MQTT för lagring?
                 node.sensors.HWEvent_motionDetect = false;
                 }
 
                 if (node.sensors.HWEvent_reedSensor1){
                 node.sensors.reedSensor1 = true;
-                // add trigger-time ?
                 // BLE eller MQTT? - MQTT för lagring?
                 node.sensors.HWEvent_reedSensor1 = false;
                 }
-                checkAlarmStatus();
-                //xSemaphoreGive(xNetworkSemaphore); - Aktiveras först när vi har BLE..
+                //xSemaphoreGive(xNetworkSemaphore);  // Aktiveras först för BLE, alt. MQTT för brandlarmet.
             } else {
-                // går ENDAST på tidsintevall - oberoende semaphore, ~2000ms. --- OBS, avstängt nu.
+                // går ENDAST på tidsintevall - oberoende semaphore, ~2000ms. 
+                getDS18B20data(); // TESTAR
                 }
-            }
-        vTaskDelay(pdMS_TO_TICKS(20)); // pausa inte denna.
+
+        checkAlarmStatus(); // Checka om något larm är triggat.
+        vTaskDelay(pdMS_TO_TICKS(20)); // // TESTAR
+    }
 }
 
 
@@ -72,15 +72,13 @@ void vAlarmTask(void *Params){
 void vNetworkTask(void *Params){
     // körs bara EN gång
     bool timeIsSet = false;
-    Serial.println("Wifi Init..");
     initWiFi();
     Serial.println("Wifi Init: Complete!");
 
     for (;;){
-
         // väntar här - vaknar av semaphore ELLER timeout
         BaseType_t xResult = xSemaphoreTake(xNetworkSemaphore, pdMS_TO_TICKS(5000));
-
+        
         // körs ALLTID när loopen vaknar;
         manageWiFi();
         //manageBLE();
@@ -92,6 +90,7 @@ void vNetworkTask(void *Params){
                 }
             }
         }            
+    vTaskDelay(100);
     }
 }
 
@@ -102,7 +101,7 @@ void vSystemMonitorTask(void *Params){
 
     for (;;){
         readLowPrioSensors();
-        getDS18B20data();   // För brandlarm - bör ev. flyttas till Alarm Task med högre prio? (men stör MQTT-connection om de körs där nu pg.a one-wire??)
+        //getDS18B20data();   // För brandlarm - bör ev. flyttas till Alarm Task med högre prio? (men stör MQTT-connection om de körs där nu pg.a one-wire??)
         checkAlarmStatus();            
         xSemaphoreGive(xNetworkSemaphore);
 
