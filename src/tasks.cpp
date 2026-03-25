@@ -16,7 +16,6 @@
 
 void initComponents(){
     RTC.begin();
-    initBLE();
     initDHT();
     initDS18B20();
     //initPIR();

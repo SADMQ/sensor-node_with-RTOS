@@ -10,6 +10,7 @@ SemaphoreHandle_t xAlarmSemaphore;
 SemaphoreHandle_t xSystemMonitorSemaphore;
 SemaphoreHandle_t xNetworkSemaphore;
 TimerHandle_t xLEDTimer;
+QueueHandle_t xAlarmQueue;
 
 extern "C" void vApplicationTickHook(void) {
   node.sysTime++;
@@ -26,17 +27,21 @@ void setup() {
   // starta timer
   xTimerStart(xLEDTimer, 0);
 
+  //xRadioMutex = xSemaphoreCreateMutex();
   xAlarmSemaphore = xSemaphoreCreateBinary();
   xSystemMonitorSemaphore = xSemaphoreCreateBinary();
   xNetworkSemaphore = xSemaphoreCreateBinary();
+  xBLESemaphore = xSemaphoreCreateBinary();
+  xAlarmQueue = xQueueCreate(10, sizeof(AlarmInfo));
 
   //attachInterrupt(digitalPinToInterrupt(mq2Pin), smokeIsDetected, RISING); - Körs digitalt (DO).
   attachInterrupt(digitalPinToInterrupt(reedPin), reedIsTriggerd, RISING);
   attachInterrupt(digitalPinToInterrupt(pirPin), motionIsDetected, RISING);
 
-  xTaskCreate(vAlarmTask, "ALARM", 192, NULL, 3, NULL); // OBS! Kan behöva ökas när vi ökar antal sensorer här.
-  xTaskCreate(vSystemMonitorTask, "MONITOR", 192, NULL, 2, NULL);
-  xTaskCreate(vNetworkTask, "NET", 1024, NULL, 1, NULL);
+  xTaskCreate(vAlarmTask, "ALARM", 192, NULL, 4, NULL); // OBS! Kan behöva ökas när vi ökar antal sensorer här.
+  xTaskCreate(vNetworkTask, "WIFI", 1024, NULL, 3, NULL);
+  //xTaskCreate(vBLETask, "BLE", 2048, NULL, 3, NULL); // TESTAR..
+  xTaskCreate(vSystemMonitorTask, "MONITOR", 192, NULL, 1, NULL);
   
   vTaskStartScheduler();
 }

@@ -6,6 +6,7 @@
 extern SemaphoreHandle_t xAlarmSemaphore;
 extern SemaphoreHandle_t xNetworkSemaphore;
 extern SemaphoreHandle_t xSystemMonitorSemaphore;
+extern QueueHandle_t xAlarmQueue;
 
 // HIGH PRIO pins to monitor (HW interrupt)
 const int reedPin = 3;
@@ -16,11 +17,32 @@ void vAlarmTask(void *Params);
 void vNetworkTask(void *Params);
 void vSystemMonitorTask(void *Params);
 void updCurrentTime(char* timestamp, size_t size);
+
 typedef enum
 {
     WAKING_UP,
     RUNNING
 }RunStatus;
+
+
+typedef enum : uint8_t
+{
+    NONE = 0,
+    WATER = 1,
+    DOOR = 2,
+    MOTION = 3,
+    FIRE = 4
+}AlarmTrigger;
+
+// packad strukt
+typedef struct __attribute__((packed))
+{
+    AlarmTrigger trigger;
+    uint32_t time;
+}AlarmInfo;
+
+extern AlarmInfo alarmInfo;
+
 
 // enum: Definierar larm "mode"
 typedef enum
@@ -69,8 +91,8 @@ typedef struct
 // struct: packa SAMTLIG data (extern)
 typedef struct
 {
-    RunStatus runStatus;       // WAKING_UP (ca 60 s) | RUNNING
-    ConnectionStatus connectionStatus; // WiFi Active? | BLE Active?
+    RunStatus runStatus;       // WAKING_UP | RUNNING
+    ConnectionStatus connectionStatus; // WiFi Active? | BLE Active? | MQTT Active?
     AlarmMode alarmMode;       // STATE_DISARMED | STATE_ARMED_HOME | STATE_ARMED_AWAY
     AlarmReason alarmStatus;   // intrusionAlarm | fireAlarm | waterLeak | systemFailure
     SensorData sensors;         // all sensordata

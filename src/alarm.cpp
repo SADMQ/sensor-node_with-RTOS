@@ -5,27 +5,18 @@
 #include <stdio.h>
 #include "alarm.h"
 #include <WiFi.h>
+#include <Arduino_FreeRTOS.h>
 #define DS18B20_ALARMING_TEMP 60 // Temp: ca 60
+
+AlarmInfo alarmInfo =  {NONE, 0};
 
 char timestamp[25];
 
-void updCurrentTime(char* timestamp, size_t size){
+uint32_t getUnixTime(){
   RTCTime currentTime;
   RTC.getTime(currentTime);
-  
-  struct tm timeinfo = currentTime.getTmTime();
-
-  // tidsstruktur
-  snprintf(timestamp, size, "%04d-%02d-%02d %02d:%02d:%02d", 
-         timeinfo.tm_year + 1900, // tm_year räknar från 1900
-         timeinfo.tm_mon + 1,     // tm_mon räknar från 0 (januari)
-         timeinfo.tm_mday, 
-         timeinfo.tm_hour, 
-         timeinfo.tm_min, 
-         timeinfo.tm_sec);
+  return (uint32_t)currentTime.getUnixTime();
 }
-
-
 
 //definierar node-strukten (samt deklarera nässlade struktar)
 System node = {
@@ -58,12 +49,16 @@ System node = {
 
 
 int checkAlarmStatus(){ 
-  updCurrentTime(timestamp, sizeof(timestamp));
-
   // Water-leak
   if (node.sensors.waterLeak == true){
     node.alarmStatus.waterLeak = true;
-    // time stamp 
+    
+    // lagrar vad & när i struct.
+    alarmInfo.time = getUnixTime();
+    alarmInfo.trigger = WATER;
+    // lägg i Queue!
+    xQueueSend(xAlarmQueue, &alarmInfo, 0);
+
     Serial.print(timestamp);
     Serial.println("\n--WATER-LEAK DETECTED--\n");
   } else {
@@ -72,6 +67,13 @@ int checkAlarmStatus(){
   // Fire
   if (node.sensors.smokeSensor == true || (node.sensors.fireTemp >= DS18B20_ALARMING_TEMP)){
     node.alarmStatus.fireAlarm = true;
+
+    // lagrar vad & när i struct.
+    alarmInfo.time = getUnixTime();
+    alarmInfo.trigger = FIRE;
+    // lägg i Queue!
+    xQueueSend(xAlarmQueue, &alarmInfo, 0);
+
     // time stamp 
     Serial.print(timestamp);
     Serial.println("\n--FIRE DETECTED--\n");
@@ -86,6 +88,12 @@ int checkAlarmStatus(){
     // Reed (door / widnow sensor)
     if (node.sensors.reedSensor1 == true){
       node.alarmStatus.intrusionAlarm = true;
+      // lagrar vad & när i struct.
+      alarmInfo.time = getUnixTime();
+      alarmInfo.trigger = DOOR;
+      // lägg i Queue!
+      xQueueSend(xAlarmQueue, &alarmInfo, 0);
+      
       // time stamp 
       Serial.print(timestamp);
       Serial.println("\n--DOOR/WINDOW DETECTED--\n");
@@ -94,19 +102,30 @@ int checkAlarmStatus(){
     // Motion
     if (node.sensors.motionDetect == true){
       node.alarmStatus.intrusionAlarm = true;
+
+      // lagrar vad & när i struct.
+      alarmInfo.time = getUnixTime();
+      alarmInfo.trigger = MOTION;
+      // lägg i Queue!
+      xQueueSend(xAlarmQueue, &alarmInfo, 0);
+
       // time stamp 
       Serial.print(timestamp);
       Serial.println("\n--MOTION DETECTED--\n");
     }
-    
     return 0;
 
   case STATE_ARMED_HOME:
     // Reed (door / widnow sensor)
-        if (node.sensors.reedSensor1 == true){
+      if (node.sensors.reedSensor1 == true){
       node.alarmStatus.intrusionAlarm = true;
-      // time stamp 
-      // Serial.print(timestamp);
+      // lagrar vad & när i struct.
+      alarmInfo.time = getUnixTime();
+      alarmInfo.trigger = DOOR;
+      // lägg i Queue!
+      xQueueSend(xAlarmQueue, &alarmInfo, 0);
+
+      Serial.print(timestamp);
       Serial.println("\n--DOOR/WINDOW DETECTED--\n");
     }
     return 0;
