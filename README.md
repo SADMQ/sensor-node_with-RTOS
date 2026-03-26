@@ -28,13 +28,13 @@ When an alarm is detected - at fire or intrution:
 ---
 ## Comminucation: BLE & MQTT 
 
-BLE (Tx):
-  * Heartbet every 5s
+BLE (Tx) - `Indicate with handshake`:
+  * Heartbet: Every 5s 
   * Send critical alarms, as packages.
 
 MQTT (Tx):
-* Heartbet every 10s
-* Has Will & Testament
+* Heartbet: Every 10s
+* Has Will & Testament (LWT)
   * Is the sensor-node stop sending heartbeats - a 'OFFLINE status' will be publish of the Broker.
 * Send info every 30s: temp/humidity & ( soon water leak )
 
