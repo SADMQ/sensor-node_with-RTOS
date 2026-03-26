@@ -35,7 +35,7 @@ BLE (Tx) - `Indicate with handshake`:
 MQTT (Tx):
 * Heartbet: Every 10s
 * Has Will & Testament (LWT)
-  * Is the sensor-node stop sending heartbeats - a 'OFFLINE status' will be publish of the Broker.
+* If the sensor node stops sending heartbeats, an 'OFFLINE' status will be published by the Broker.
 * Send info every 30s: temp/humidity & ( soon water leak )
 
 ---
