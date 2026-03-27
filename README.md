@@ -51,12 +51,12 @@ MQTT (Tx):
 
 * Sensor:
 
-| Sensors       | Detect                        | PIN @ Arduino | Transmits to     | Implemented  | External Interrupts | Alarm Triggering |
+| Sensors       | Detect                        | PIN @ Arduino | Transmits to     | Implemented  | External Interrupts | Triggering State |
 | ------------- |:-----------------------------:|:-------------:|:----------------:|:------------:|:-------------------:|:----------------:|
 | DHT11         | Indoor: temp + humidity       | D2 (P104)     |  Broker @ MQTT   | Yes          |                     | -                |
 | DS18B20       | Fire @ Temp (pull-up needed)  | D5 (P107)     |  ESP32 @ BLE     | Yes          |                     | Always           |
 | MQ2           | Fire @ Gas                    |  -            |  ESP32 @ BLE     |              | Yes                 | Always           |
-| Rain-sensor   | Water leak                    |  -            | *(Broker @ MQTT)*  |              |                     | -                |
+| Rain-sensor   | Water leak                    |  -            | *(Broker @ MQTT)*  |              |                     | Always         |
 | PIR           | Motion                        | D4 (P106)     |  ESP32 @ BLE     |              | Yes                 | Armed away       |
 | Reed          | Open door or window           | D3 (P105)     |  ESP32 @ BLE     | Yes          | Yes                 | Armed away/home  |
 
