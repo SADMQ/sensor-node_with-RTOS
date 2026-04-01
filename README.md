@@ -70,14 +70,16 @@ MQTT (Tx):
 ---
 ## Setup - Info
 
-When an alarm is detected - at fire or intrution:
-1) The system notice the alarm, and update the state machine
-2) The alarm info is stored in a packed struct of 5 bytes, "AlarmInfo"
-   1) Timestamp is added (unix time)
-   2) Alarmtype is added (what kind of alarm)
-3) The alarm info is sending three times to a queue (AlarmQueue)
-4) The xNetworkTask wake up at queue - and send the alarm to BLE.
+1) Update your Credentials → plattformio.ini
 
+**Visual Diagnostic (LED matrix)**
+* Flash patterns:
+  * System ready: Slow blink
+  * Not connected to WiFi, MQTT or BLE: Fast blink
+
+* LED states: 
+  * Idle → 2x2 center LEDs
+  * Alarming → ALL matrix LEDs
 ---
 ## Comminucation: BLE & MQTT 
 

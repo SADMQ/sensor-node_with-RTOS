@@ -17,9 +17,7 @@
 #define LOW_PRIO_SENSORS_READ 2000 //  (TEST: 2s)
 
 void initComponents(){
-    RTC.begin();
     initCredentials();
-    //initBLE();
     initDHT();
     initDS18B20();
     //initPIR();
@@ -41,7 +39,7 @@ void initComponents(){
 // }
 
 int initTime(){ 
-
+        RTC.begin();
         WiFiUDP ntpUDP;
         NTPClient timeClient(ntpUDP, ZeroIP, 0, 60000); // Hämtar tid från Pi Accesspunkt
 
