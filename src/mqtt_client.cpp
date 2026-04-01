@@ -6,8 +6,8 @@
 //#include <ArduinoJson.h> - används inte ännu..
 #include "indicateStatus.h"
 #define MQTT_SEND_TIME 30000            // Hur ofta ska vi skicka mqtt.. Testar: 30s
-#define MQTT_RECONNECT_TIME 15000       // max reconnect intervall, Testar: 15s
-#define MQTT_CONNECTION_TIMEOUT 10000   
+#define MQTT_RECONNECT_TIME 60000       // max reconnect intervall, Testar: 15s
+#define MQTT_CONNECTION_TIMEOUT 5000   
 #define MQTT_HEARTBEAT 10000            // | Testar 10s (LWT sker ~16s)
 #define BROKER_PORT 8883                // okrypt: 1883 - TLS, krypt: 8883
 
@@ -27,8 +27,8 @@ bool willRetain                  = true;
 int willQos                      = 1;
 
 //bool tryMQTTconnect = false;
-unsigned long MQTTConnectTimer = -15000; // Testar: för att connecta omedelbart vid uppstart..
-unsigned long MQTTLastSendTimer = -30000; // Testar: skicka första meddelandet omedelbart..
+unsigned long MQTTConnectTimer = -MQTT_RECONNECT_TIME; // Testar: för att connecta omedelbart vid uppstart..
+unsigned long MQTTLastSendTimer = -MQTT_SEND_TIME; // Testar: skicka första meddelandet omedelbart..
 
 void initCredentials(){
 
@@ -53,7 +53,7 @@ int manageMQTT() {
 
         // mqtt settings
         mqttClient.setKeepAliveInterval(MQTT_HEARTBEAT);
-        //mqttClient.setConnectionTimeout(MQTT_CONNECTION_TIMEOUT);
+        mqttClient.setConnectionTimeout(MQTT_CONNECTION_TIMEOUT);
 
         if (mqttClient.connect(broker, port)) { 
             Serial.println("\nMQTT: Connecting..\n");

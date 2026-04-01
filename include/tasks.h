@@ -24,6 +24,4 @@ int readPrio2Sensors();
 int readPrio1Sensors();
 int initTime();
 
-
-
 #endif

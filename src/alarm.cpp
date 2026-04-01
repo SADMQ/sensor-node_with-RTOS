@@ -5,27 +5,20 @@
 #include <stdio.h>
 #include "alarm.h"
 #include <WiFi.h>
+#include <Arduino_FreeRTOS.h>
 #define DS18B20_ALARMING_TEMP 60 // Temp: ca 60
+
+AlarmInfo alarmInfo =  {NONE, 0};
+uint32_t lastFireTimer;
+uint32_t lastWaterLeakTimer;
 
 char timestamp[25];
 
-void updCurrentTime(char* timestamp, size_t size){
+uint32_t getUnixTime(){
   RTCTime currentTime;
   RTC.getTime(currentTime);
-  
-  struct tm timeinfo = currentTime.getTmTime();
-
-  // tidsstruktur
-  snprintf(timestamp, size, "%04d-%02d-%02d %02d:%02d:%02d", 
-         timeinfo.tm_year + 1900, // tm_year räknar från 1900
-         timeinfo.tm_mon + 1,     // tm_mon räknar från 0 (januari)
-         timeinfo.tm_mday, 
-         timeinfo.tm_hour, 
-         timeinfo.tm_min, 
-         timeinfo.tm_sec);
+  return (uint32_t)currentTime.getUnixTime();
 }
-
-
 
 //definierar node-strukten (samt deklarera nässlade struktar)
 System node = {
@@ -58,22 +51,30 @@ System node = {
 
 
 int checkAlarmStatus(){ 
-  updCurrentTime(timestamp, sizeof(timestamp));
-
-  // Water-leak
-  if (node.sensors.waterLeak == true){
+  // WATER-LEAK - skicka bara denna via MQTT ?
+  if ((node.sysTime - lastWaterLeakTimer >= 15000) && node.sensors.waterLeak == true){
     node.alarmStatus.waterLeak = true;
-    // time stamp 
-    Serial.print(timestamp);
+    lastWaterLeakTimer = node.sysTime;
+    
+    //Tidstämpel på denna...?
+    //alarmInfo.trigger = WATER;
+    //dispatchAlarm(); -- endast MQTT, ej BLE?
+
     Serial.println("\n--WATER-LEAK DETECTED--\n");
   } else {
     node.alarmStatus.waterLeak = false;
   }
-  // Fire
-  if (node.sensors.smokeSensor == true || (node.sensors.fireTemp >= DS18B20_ALARMING_TEMP)){
+
+
+  // FIRE
+  if ((node.sysTime - lastFireTimer >= 5000) && (node.sensors.smokeSensor == true || (node.sensors.fireTemp >= DS18B20_ALARMING_TEMP))){
     node.alarmStatus.fireAlarm = true;
-    // time stamp 
-    Serial.print(timestamp);
+    lastFireTimer = node.sysTime;
+
+    // lagrar vad & när i struct.
+    alarmInfo.trigger = FIRE;
+    dispatchAlarm();
+
     Serial.println("\n--FIRE DETECTED--\n");
   } else {
     node.alarmStatus.fireAlarm = false;
@@ -84,34 +85,59 @@ int checkAlarmStatus(){
   {
   case STATE_ARMED_AWAY:
     // Reed (door / widnow sensor)
-    if (node.sensors.reedSensor1 == true){
+    if (node.alarmStatus.intrusionAlarm = false && node.sensors.reedSensor1 == true){
       node.alarmStatus.intrusionAlarm = true;
-      // time stamp 
-      Serial.print(timestamp);
+
+      // lagrar vad & när i struct.
+      alarmInfo.trigger = DOOR;
+      dispatchAlarm();
+      
       Serial.println("\n--DOOR/WINDOW DETECTED--\n");
+    } else {
+      node.alarmStatus.intrusionAlarm = false;
     }
 
     // Motion
-    if (node.sensors.motionDetect == true){
+    if (node.alarmStatus.intrusionAlarm = false && node.sensors.motionDetect == true){
       node.alarmStatus.intrusionAlarm = true;
-      // time stamp 
-      Serial.print(timestamp);
+
+      alarmInfo.trigger = MOTION;
+      dispatchAlarm();
+
       Serial.println("\n--MOTION DETECTED--\n");
+    } else {
+      node.alarmStatus.intrusionAlarm = false;
     }
-    
     return 0;
 
   case STATE_ARMED_HOME:
     // Reed (door / widnow sensor)
-        if (node.sensors.reedSensor1 == true){
+      if (node.alarmStatus.intrusionAlarm = false && node.sensors.reedSensor1 == true){
       node.alarmStatus.intrusionAlarm = true;
-      // time stamp 
-      // Serial.print(timestamp);
+
+      alarmInfo.trigger = DOOR;
+      dispatchAlarm();
+
       Serial.println("\n--DOOR/WINDOW DETECTED--\n");
+    } else {
+      node.alarmStatus.intrusionAlarm = false;
     }
     return 0;
 
   case STATE_DISARMED:
     return 0;
-  }
+  } 
+}
+
+// packa larmet med tidstämpel och skickar iväg till kö.
+void dispatchAlarm(){
+
+  // sätt tidsstämplen för larmet
+  alarmInfo.time = getUnixTime();
+
+  // skicka larmpaketet till kön
+  xQueueSend(xAlarmQueue, &alarmInfo, 0);
+
+  // nolla larmet
+  alarmInfo =  {NONE, 0};
 }

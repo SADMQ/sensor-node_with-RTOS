@@ -5,11 +5,7 @@
 #include "wifi_manager.h"
 ArduinoLEDMatrix matrix;
 
-#define LED_OFF_TIME 1000
-#define LED_ON_TIME 500
-
 bool ledActive = false;
-unsigned long ledClock = 0;
 
 typedef struct{
     uint32_t data[3];

@@ -9,14 +9,14 @@ void initReed(){
 
 // indikera ATT vi triggat
 void reedIsTriggerd(){
-    // Initierar variabel (för prio-besked ifrån RTOS)
+    // Initierar variabel (för prio-besked till RTOS)
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
     node.sensors.HWEvent_reedSensor1 = true;
 
-    // Flagga semaforen och lagrar prio-svaret. 
+    // Flagga semaforen och lagrar prio-svaret.  Om påkallad Task (Alarm) har Högre prio -> 'HigherPriorityTaskWoken' blir pdTRUE.
     xSemaphoreGiveFromISR(xAlarmSemaphore, &xHigherPriorityTaskWoken);
-
+    
     // Tvinga RTOS byta task omedelbart, om prio är högre.
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }

@@ -19,10 +19,11 @@
 void initComponents(){
     RTC.begin();
     initCredentials();
-    initBLE();
+    //initBLE();
     initDHT();
     initDS18B20();
     //initPIR();
+    //initMQ2();
     initReed();
     initMatrix();
 }
@@ -74,7 +75,8 @@ void vAlarmTask(void *Params){
         // väntar på given semafor - dvs. ett HW-interrupt, 
         BaseType_t xResult = xSemaphoreTake(xAlarmSemaphore, pdMS_TO_TICKS(2000)); // portMAX_DELAY - DS18B20 här, verkar sänka mqtt.. one-wire?
 
-            if (xResult == pdPASS){
+            // kör endast vid semaphore
+            if (xResult){
                 if (node.sensors.HWEvent_motionDetect){
                 node.sensors.motionDetect = true;
                 // BLE eller MQTT? - MQTT för lagring?
@@ -86,14 +88,13 @@ void vAlarmTask(void *Params){
                 // BLE eller MQTT? - MQTT för lagring?
                 node.sensors.HWEvent_reedSensor1 = false;
                 }
-                //xSemaphoreGive(xNetworkSemaphore);  // Aktiveras först för BLE, alt. MQTT för brandlarmet.
             } else {
                 // går ENDAST på tidsintevall - oberoende semaphore, ~2000ms. 
-                getDS18B20data(); // TESTAR
+                getDS18B20data();
                 }
 
         checkAlarmStatus(); // Checka om något larm är triggat.
-        vTaskDelay(pdMS_TO_TICKS(20)); // // TESTAR
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
 
@@ -102,27 +103,34 @@ void vAlarmTask(void *Params){
 // Händelsestyrd & tidsstyrd
 void vNetworkTask(void *Params){
     // körs bara EN gång
+    const AlarmInfo heartbeat = {NONE, 0};  // Heartbeat params
+    AlarmInfo alarmInfoToSend;              // Skarpt larm
     bool timeIsSet = false;
     initWiFi();
-    Serial.println("WiFi: Init - Complete!");
     initBLE();
+    Serial.println("WiFi & BLE: Init - Complete!");
 
     for (;;){
-        // väntar här - vaknar av semaphore ELLER timeout
-        BaseType_t xResult = xSemaphoreTake(xNetworkSemaphore, pdMS_TO_TICKS(5000));
-        
-        // körs ALLTID när loopen vaknar;
-        manageWiFi();
-        manageBLE(); // TESTAR .. 
-        if (wifiIsConnected()){
-            manageMQTT();
-            if (!timeIsSet){
-                if (initTime()){
-                timeIsSet = true;
+        // väntar här - vaknar av Queue ELLER timeout
+        BaseType_t xResult = xQueueReceive(xAlarmQueue, &alarmInfoToSend,  pdMS_TO_TICKS(5000)); // TESTAR öka 5s->10s
+        // körs ALLTID när loopen vaknar (KÖ eller Timeout);
+
+        // körs endast vid TIMEOUT
+        if (!xResult){
+            manageBLE(&heartbeat);
+            manageWiFi();
+            if (wifiIsConnected()){
+                manageMQTT();
+                if (!timeIsSet){
+                    timeIsSet = initTime();
                 }
             }
-        }            
-    vTaskDelay(100);
+            
+        } else {
+            // Körs endast vid KÖ / LARM (= pdPASS/TRUE)
+            manageBLE(&alarmInfoToSend);
+        }
+        vTaskDelay(100);
     }
 }
 
@@ -132,10 +140,7 @@ void vSystemMonitorTask(void *Params){
     // Allt här körs EN gång
 
     for (;;){
-        readLowPrioSensors();
-        checkAlarmStatus();            
-        xSemaphoreGive(xNetworkSemaphore);
-
+        readLowPrioSensors();         
         vTaskDelay(pdMS_TO_TICKS(30000)); // pausa task, 30s
     }
 }
