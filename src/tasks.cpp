@@ -43,10 +43,14 @@ int initTimeNTP(){
         WiFiUDP ntpUDP;
         NTPClient timeClient(ntpUDP, ZeroIP, 0, 60000); // Hämtar tid från Pi Accesspunkt
 
+        //int attempts = 0;
+
         timeClient.begin();
 
         // Single loop: forceUpdate() returns true only on a successful packet receipt
-        timeClient.forceUpdate();
+        timeClient.forceUpdate(); //&& attempts++ < 5) {
+            //delay(1000); 
+        //}
 
         unsigned long epoch = timeClient.getEpochTime();
         
