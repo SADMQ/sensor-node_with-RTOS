@@ -6,6 +6,22 @@ This repository manages all sensor data, running on an Arduino Uno R4 WiFi. The 
 
 ---
 
+## SETUP guide & good to know
+
+1) Update your Arduino-firmware version first, in Arduino IDE.
+  * Select board -> Menu: Tools -> Menu: Firmware Update
+2) Update your Credentials → plattformio.ini
+
+**Visual Diagnostic (LED matrix)**
+* Flash patterns:
+  * System ready: Slow blink
+  * Not connected to WiFi, MQTT or BLE: Fast blink
+
+* LED states: 
+  * Idle → 2x2 center LEDs
+  * Alarming → ALL matrix LEDs
+---
+
 ## Architecture - RTOS & Tasks
 
 The system utilizes Hardware Interrupts for immediate sensor detection and FreeRTOS for task orchestration and Binary Semaphores.
@@ -68,21 +84,7 @@ MQTT (Tx):
   * Every alarm event has an time stamp
 
 ---
-## Setup - Info
 
-1) Update your Arduino-firmware version first, in Arduino IDE.
-  * Select board -> Menu: Tools -> Menu: Firmware Update
-2) Update your Credentials → plattformio.ini
-
-**Visual Diagnostic (LED matrix)**
-* Flash patterns:
-  * System ready: Slow blink
-  * Not connected to WiFi, MQTT or BLE: Fast blink
-
-* LED states: 
-  * Idle → 2x2 center LEDs
-  * Alarming → ALL matrix LEDs
----
 ## Comminucation: BLE & MQTT 
 
 BLE (Tx) - `Indicate with handshake`:
