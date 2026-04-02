@@ -9,7 +9,7 @@ This repository manages all sensor data, running on an Arduino Uno R4 WiFi. The 
 ## SETUP guide & good to know
 
 1) Update your Arduino-firmware version first, in Arduino IDE.
-  * Select board -> Menu: Tools -> Menu: Firmware Update
+     * Select board -> Menu: Tools -> Menu: Firmware Update
 2) Update your Credentials → plattformio.ini
 
 **Visual Diagnostic (LED matrix)**
