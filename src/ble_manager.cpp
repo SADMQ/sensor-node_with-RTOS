@@ -68,7 +68,7 @@ void manageBLE(const AlarmInfo *alarmData) {
 
         // DEBUG (visar larmstrukten som skickas till ESP..)
         Serial.print("\n\n------BLE_DATA------");
-        Serial.print("\nBLE: Send  to: ");
+        Serial.print("\nBLE: Send to: ");
         Serial.print(central.address());
         Serial.print("\nBLE Tx: data sent: ");
         Serial.print(alarmData->trigger);
