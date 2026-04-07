@@ -45,27 +45,36 @@ bool initBLE(){
 
 
 void manageBLE(const AlarmInfo *alarmData) {
+  // 1. Låt BLE uppdatera sin interna status
+    BLE.poll();
+
+    // 2. Hämta den anslutna klienten
     BLEDevice central = BLE.central();
 
   // När en klient ansluter
     if (central) {
+      // Om detta är en ny anslutning
       if (!node.connectionStatus.bleIsActive){
         Serial.print("BLE: Ansluten till: ");
         Serial.println(central.address()); 
         node.connectionStatus.bleIsActive = true;
       }
          
-      // Kör så länge klienten är ansluten [testar med IF för att göra den non-blocking]
+      // Kör så länge klienten är ansluten
       if (central.connected()) {     
-        
+  
         // skicka larmdata, via BLE - alt heartbeat 'NULL'
-        levelCharacteristic.writeValue((uint8_t *)alarmData, sizeof(alarmData)); 
+        levelCharacteristic.writeValue((uint8_t *)alarmData, sizeof(AlarmInfo)); 
 
         // DEBUG (visar larmstrukten som skickas till ESP..)
+        Serial.print("\n\n------BLE_DATA------");
+        Serial.print("\nBLE: Skickar till: ");
+        Serial.print(central.address());
         Serial.print("\nBLE: data sent: ");
         Serial.print(alarmData->trigger);
         Serial.print("\nBLE: time sent: ");
-        Serial.println(alarmData->time);
+        Serial.print(alarmData->time);
+        Serial.print("\n------BLE_DATA------\n\n");
         
         // Ta emot data från ESP32 - "alarm-state"
         if (stateCharacteristic.written()){
@@ -81,6 +90,4 @@ void manageBLE(const AlarmInfo *alarmData) {
         node.connectionStatus.bleIsActive = false;
       }
     } 
-    // Viktigt: låt BLE jobba [oavsätt om vi är connectade eller ej]
-    BLE.poll();
 }
