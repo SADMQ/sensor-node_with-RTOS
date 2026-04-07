@@ -170,7 +170,6 @@ void vBLETask(void* Params){
         if (!xResult){
             // Körs endast vid TIMEOUT
             manageBLE(&heartbeat);
-            Serial.println("BLE: Heartbeat sent..");
         } else {
             // Körs endast vid KÖ / LARM (= pdPASS/TRUE)
             manageBLE(&alarmInfoToSend);
