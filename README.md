@@ -50,7 +50,10 @@ BLE (Tx) - `Indicate with handshake`:
   * Send critical alarms, as packages (5 bytes)
 
 BLE (Rx)
- * Receive alarm-state from Gateway node / ESP32 (1 byte) 
+ * Receive alarm-state from Gateway node / ESP32 (1 byte) as:
+   * DISARMED (0)
+   * ARMED-HOME (1)
+   * ARMED-AWAY (2)
 
 MQTT (Tx):
 * Heartbet: Every 10s
