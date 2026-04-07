@@ -26,7 +26,7 @@ This repository manages all sensor data, running on an Arduino Uno R4 WiFi. The 
 
 The system utilizes Hardware Interrupts for immediate sensor detection and FreeRTOS for task orchestration and Binary Semaphores.
 * Priority 4 (Highest): Critical alarm events (PIR/Reed/MQ2/DS18B20) via hardware interrupts & semaphores.
-* Priority 3 : Bluetooth communication (BLE) - sending critiala alarms.
+* Priority 3 : Bluetooth communication (BLE) - sending critiala alarms & receiving alarm-state.
 * Priority 2 : Network communication (WiFi/MQTT).
 * Priority 1 : System monitoring (Temp/Water leak).
 * Software Timer: Used for a real-time LED status indication, without the memory cost of a dedicated task.
@@ -47,7 +47,10 @@ When an alarm is detected - at fire or intrution:
 
 BLE (Tx) - `Indicate with handshake`:
   * Heartbet: Every 5s 
-  * Send critical alarms, as packages.
+  * Send critical alarms, as packages (5 bytes)
+
+BLE (Rx)
+ * Receive alarm-state from Gateway node / ESP32 (1 byte) 
 
 MQTT (Tx):
 * Heartbet: Every 10s
@@ -59,7 +62,6 @@ MQTT (Tx):
 ## Upcomming
 
 * Implement & integrate other sensors (MQ2, PIR, Water-leak)
-* BLE (Rx) - Receive and handle alarm state from ESP32 (GW)
 * Add time-zone (ezTime ?)
 
 ---
@@ -82,6 +84,7 @@ MQTT (Tx):
 
 * *RTC (Time stamp)*
   * The clock is synchronized via WiFi on startup
+  * The clock will be synced with Broker 
   * Every alarm event has an time stamp
 
 ---
