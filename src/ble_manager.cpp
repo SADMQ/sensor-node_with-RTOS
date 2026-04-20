@@ -63,27 +63,33 @@ void manageBLE(const AlarmInfo *alarmData) {
       // Kör så länge klienten är ansluten
       if (central.connected()) {     
   
-        // skicka larmdata, via BLE - alt heartbeat 'NULL'
-        levelCharacteristic.writeValue((uint8_t *)alarmData, sizeof(AlarmInfo)); 
 
-        // DEBUG (visar larmstrukten som skickas till ESP..)
-        Serial.print("\n\n------BLE_DATA------");
-        Serial.print("\nBLE: Send to: ");
-        Serial.print(central.address());
-        Serial.print("\nBLE Tx: data sent: ");
-        Serial.print(alarmData->trigger);
-        Serial.print("\nBLE Tx: time sent: ");
-        Serial.print(alarmData->time);
-        Serial.print("\n------BLE_DATA------\n\n");
+        if (alarmData != nullptr){
+          // skicka larmdata, via BLE - alt heartbeat 'NULL'
+          levelCharacteristic.writeValue((uint8_t *)alarmData, sizeof(AlarmInfo)); 
+
+          // DEBUG (visar larmstrukten som skickas till ESP..)
+          Serial.print("\n\n------BLE_DATA------");
+          Serial.print("\nBLE: Send to: ");
+          Serial.print(central.address());
+          Serial.print("\nBLE Tx: data sent: ");
+          Serial.print(alarmData->trigger);
+          Serial.print("\nBLE Tx: time sent: ");
+          Serial.print(alarmData->time);
+          Serial.print("\n------BLE_DATA------\n\n");
+        }
+
+
         
-        // Ta emot data från ESP32 - "alarm-state"
-        if (stateCharacteristic.written()){
+        // Ta emot data från ESP32 - "alarm-state" - WHILE för att tömma hela kön! -- if tar bara ETT värde i taget=LAGG.
+        while (stateCharacteristic.written()){
           uint8_t receivedState = stateCharacteristic.value();
 
           // uppdatera internt state med mottaget state
-          node.alarmMode = (AlarmMode)receivedState;
-          Serial.print("\nBLE Rx: Nytt state mottaget: ");
-          Serial.println(node.alarmMode);
+          node.alarmMode = (AlarmMode)receivedState;  // OBS! <- ska läggas till i en Queue!!
+          Serial.print("\nBLE Rx (ESP): Heartbeat-state: ");
+          Serial.println(receivedState); // --- TESTAR
+          //Serial.println(node.alarmMode);
         }
       }  else {
         Serial.println("BLE: Klient kopplade ner");

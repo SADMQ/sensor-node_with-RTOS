@@ -32,7 +32,7 @@ unsigned long MQTTLastSendTimer = -MQTT_SEND_TIME; // Testar: skicka första med
 
 void initCredentials(){
 
-    wifiClient.setCACert(root_ca);
+    wifiClient.setCACert(root_ca); // ----------- <<< OBS: INAKTIVERAR FÖR TEST <<<
     mqttClient.setUsernamePassword(MQTT_USER, MQTT_PASS);
 }
 

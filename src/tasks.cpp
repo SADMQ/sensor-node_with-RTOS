@@ -163,16 +163,17 @@ int readLowPrioSensors(){
 void vBLETask(void* Params){
     // skicka ble från queue 
     initBLE();
-    const AlarmInfo heartbeat = {NONE, 0}; 
+    const AlarmInfo empty = {NONE, 0}; 
     AlarmInfo alarmInfoToSend;
     Serial.println("BLE: Init - Complete!");
+    manageBLE(&empty);
 
     for (;;){
-        BaseType_t xResult = xQueueReceive(xAlarmQueue, &alarmInfoToSend,  pdMS_TO_TICKS(5000));
+        BaseType_t xResult = xQueueReceive(xAlarmQueue, &alarmInfoToSend,  pdMS_TO_TICKS(100));
 
         if (!xResult){
             // Körs endast vid TIMEOUT
-            manageBLE(&heartbeat);
+            manageBLE(nullptr);
         } else {
             // Körs endast vid KÖ / LARM (= pdPASS/TRUE)
             manageBLE(&alarmInfoToSend);
