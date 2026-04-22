@@ -46,16 +46,22 @@ typedef enum : uint8_t
     STATE_ARMED_AWAY = 2
 }AlarmMode;
 
+typedef struct {
+    int16_t inTemp;
+    uint16_t inHum;
+    int16_t apiTemp; // outdoor temp, from API
+    uint16_t apiHum; // outdoor humidity, from API
+} Climate;
 
-// packad strukt 
+
+// packad strukt: för att skicka via BLE - Bara utvald AlarmInfo-data används för JSON objektet, som skickas mot broker.
 typedef struct __attribute__((packed)) // 15-byte packat
 {
-    AlarmMode alarmMode;    // State: 0=Disarmed, 1=ArmedHome, 2=ArmedAway [8 byte]
-    AlarmTrigger trigger;   // Trigger: 0=None, 1=Water, 2=Door, 3=Motion, 4=Fire, 5=NodeMissing (ESP) [8 byte]
-    uint32_t time;          // Timestamp - Unixtime. [4 byte]
-    // uint8_t temp;
-    // uint8_t hum;
-    // uint8_t remoteActivete;
+    AlarmMode alarmMode;    // State:   0=Disarmed, 1=ArmedHome, 2=ArmedAway                            [1 byte]
+    AlarmTrigger trigger;   // Trigger: 0=None, 1=Water, 2=Door, 3=Motion, 4=Fire, 5=NodeMissing (ESP)  [1 byte]
+    uint32_t time;          // Unixtime: Update for state AND trigger                                   [4 byte]
+    uint8_t remoteActivete; // Remote activate alarm - from Thingsboard                                 [1 byte]
+    Climate climate;        // Indoor & Outdoor (API): temp / humidity                                  [8 byte]
 }AlarmInfo;
 
 extern AlarmInfo alarmInfo;

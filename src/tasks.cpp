@@ -30,6 +30,7 @@ int initTimeWiFi(){
     unsigned long epoch = WiFi.getTime(); 
   
     if (epoch != 0) {
+        RTC.begin();
         RTCTime startTime(epoch);
         RTC.setTime(startTime); // Nu är klockan ställd!
         Serial.println("RTC: Clock synchronized!");
@@ -39,7 +40,7 @@ int initTimeWiFi(){
 }
 
 int initTimeNTP(){ 
-        RTC.begin();
+        //RTC.begin();
         WiFiUDP ntpUDP;
         NTPClient timeClient(ntpUDP, ZeroIP, 0, 60000); // Hämtar tid från Pi Accesspunkt
 
@@ -96,7 +97,7 @@ void vAlarmTask(void *Params){
                 }
 
          // Checka om något larm är triggat.
-        vTaskDelay(pdMS_TO_TICKS(20));
+        vTaskDelay(pdMS_TO_TICKS(200));
     }
 }
 
@@ -121,14 +122,14 @@ void vNetworkTask(void *Params){
             if (!node.timeIsSet){
                 node.timeIsSet = initTimeWiFi();
             }
-            // synca tiden mot broker
-            if (!node.NTCsynced && node.connectionStatus.mqttIsActive){
-                node.NTCsynced = initTimeNTP();
-            }
+            // synca tiden mot broker ----- [ Inaktivera pga MQTT problem...? ]
+            //if (!node.NTCsynced && node.connectionStatus.mqttIsActive){
+            //    node.NTCsynced = initTimeNTP();
+            //}
 
             if (xResult){
                 // ::event::
-                sendMQTT(&mqttToSend); //  skicka med meddelndet här? ---> &messageToSend
+                sendMQTT(&mqttToSend); 
                 // c) vid larm / state (Queue) event [SEND]
             }
             
@@ -159,6 +160,13 @@ int readLowPrioSensors(){
         Serial.print(" °C | Humidity: ");
         Serial.print(node.sensors.indoorHumidity, 1);
         Serial.println(" %");
+
+        alarmInfo.climate.inTemp = (int16_t)(node.sensors.indoorTemp*100.0f);
+        alarmInfo.climate.inHum = (uint16_t)(node.sensors.indoorHumidity*100.0f);
+
+        if (!xQueueSend(xAlarmQueue, &alarmInfo, pdMS_TO_TICKS(100))){
+            Serial.println("! Kunde ej skicka larm till MessagesQueue !");
+        }
     } else {
         Serial.print("DHT11: ERROR");
     }

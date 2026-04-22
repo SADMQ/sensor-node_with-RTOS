@@ -3,25 +3,23 @@
 #include "wifi_manager.h"
 #include "certificate.h"
 #include <ArduinoMqttClient.h>
-#include <ArduinoJson.h> // - används inte ännu..
+#include <ArduinoJson.h> 
 #include "indicateStatus.h"
-#define MQTT_SEND_TIME 30000            // Hur ofta ska vi skicka mqtt.. Testar: 30s
-#define MQTT_RECONNECT_TIME 5000       // max reconnect intervall, Testar: 60s->10s
-#define MQTT_CONNECTION_TIMEOUT 20000 // testar öka från 5000..   
-#define MQTT_HEARTBEAT 10000            // | Testar 10s (LWT sker ~16s)
-#define BROKER_PORT 8883                // okrypt: 1883 - TLS, krypt: 8883
+#define MQTT_SEND_TIME 30000           // Hur ofta ska vi skicka mqtt.. Testar: 30s
+#define MQTT_RECONNECT_TIME 15000       // max reconnect intervall, Testar: 60s->10s
+#define MQTT_CONNECTION_TIMEOUT 20000  // testar öka från 5000..   
+#define MQTT_HEARTBEAT 20000           // | Testar 20s (LWT sker ~16s)
+#define BROKER_PORT 1883               // okrypt: 1883 - TLS, krypt: 8883
 
-WiFiSSLClient wifiClient;
+WiFiClient wifiClient;
 MqttClient mqttClient(wifiClient);
 
 int port                         = BROKER_PORT;
 const char broker[]              = ZeroIP;
-
 const char alarmInfoTopic[]      = "alarmInfo"; // -> State, Trigger + Time 'struct' .. JSON.
-const char indoorTempTopic[]     = "sensor/indoorTemp";         // - Ta bort?
-//const char indoorHumidTopic[]    = "sensor/indoorHumidity";     // - Ta bort?
-//const char waterleakTopic[]      = "sensor/waterleak";          // - Ta bort?
-//const char fireTopic[]           = "sensor/fire";               // - Ta bort?
+
+const char indoorTempTopic[]     = "sensors/indoorTemp";         // - Bara för test (ta bort senare..?)
+const char indoorHumidTopic[]    = "sensors/indoorHumidity";     // - bara för test (ta bort senare..?)
 const char systemFailure[]       = "systemFailure";
 const char willTopic[]           = "sensor-node-status";
 const char willPayload[]         = "OFFLINE";
@@ -34,8 +32,8 @@ unsigned long MQTTLastSendTimer = -MQTT_SEND_TIME; // Testar: skicka första med
 
 void initCredentials(){
 
-    wifiClient.setCACert(root_ca); // ----------- <<< OBS: INAKTIVERAR FÖR TEST <<<
-    mqttClient.setUsernamePassword(MQTT_USER, MQTT_PASS);
+    //wifiClient.setCACert(root_ca); // ----------- <<< OBS: INAKTIVERAR FÖR TEST <<<
+    //mqttClient.setUsernamePassword(MQTT_USER, MQTT_PASS);
 }
 
 int manageMQTT() {
@@ -43,7 +41,7 @@ int manageMQTT() {
     if (node.connectionStatus.mqttIsActive){
         
         
-        sendMQTT(nullptr); // ---> Flyttad! testar att lägga denna i tasken.
+        sendMQTT(nullptr); // ---> Flyttad! Ligger i task, men nullptr körs ändå för poll. ( samt för DHT11 än så länge ).
         receiveMQTT();
     }
 
@@ -113,8 +111,6 @@ void sendMQTT(AlarmInfo *info){
         }
     }
     
-
-
     if (node.sysTime - MQTTLastSendTimer >= MQTT_SEND_TIME){
         MQTTLastSendTimer = node.sysTime;
         mqttClient.beginMessage(indoorTempTopic,false, 0,false); // QoS = 0
@@ -129,29 +125,12 @@ void sendMQTT(AlarmInfo *info){
     //    if (mqttClient.endMessage()) {
     //        Serial.println("MQTT: Humidity - Sent!\n");
     //    } 
-//
-    //    if (node.alarmStatus.fireAlarm){
-    //        mqttClient.beginMessage(fireTopic,false, 0,false);
-    //        mqttClient.print(node.sensors.fireTemp);
-    //        mqttClient.print(node.sensors.smokeSensor);
-    //        if (mqttClient.endMessage()) {
-    //            Serial.println("\nMQTT: Fire - Sent!\n");
-    //    } 
-//
-    //    if (node.alarmStatus.waterLeak){
-    //        mqttClient.beginMessage(waterleakTopic,false, 0,false);
-    //        mqttClient.print(node.sensors.waterLeak);
-    //        if (mqttClient.endMessage()) {
-    //            Serial.println("\nMQTT: Water - Sent!\n");
-    //        } 
-    //    }
 
         if (node.alarmStatus.systemFailure){
             // skicka releveant larm
         } 
 }
     
-
 
 void receiveMQTT(){
     // TA EMOT data (sub) från Broker -- "remoteActivate"

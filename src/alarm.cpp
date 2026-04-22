@@ -8,15 +8,17 @@
 #include <Arduino_FreeRTOS.h>
 #define DS18B20_ALARMING_TEMP 60 // Temp: ca 60
 
-AlarmInfo alarmInfo =  {STATE_DISARMED, NONE, -1};
+AlarmInfo alarmInfo =  {STATE_DISARMED, NONE, 0, -1, {-127,-127,-1,-1},};
 uint32_t lastFireTimer;
 uint32_t lastWaterLeakTimer;
 
 char timestamp[25];
 
-uint32_t getUnixTime(){
+uint32_t getUnixTime() {
   RTCTime currentTime;
-  RTC.getTime(currentTime);
+  if (!RTC.getTime(currentTime)) {
+      return 0; // Returnera 0 istället för skräp om läsningen misslyckas
+  }
   return (uint32_t)currentTime.getUnixTime();
 }
 
@@ -54,13 +56,12 @@ System node = {
 
 int checkAlarmStatus(){ 
   // WATER-LEAK - skicka bara denna via MQTT ?
-  if ((node.sysTime - lastWaterLeakTimer >= 15000) && node.sensors.waterLeak == true){
+  if ((node.sysTime - lastWaterLeakTimer >= 30000) && node.sensors.waterLeak == true){
     node.alarmStatus.waterLeak = true;
     lastWaterLeakTimer = node.sysTime;
     
-    //Tidstämpel på denna...?
-    //alarmInfo.trigger = WATER;
-    //dispatchAlarm(); -- endast MQTT, ej BLE?
+    alarmInfo.trigger = WATER;
+    dispatchAlarm();
 
     Serial.println("\n--WATER-LEAK DETECTED--\n");
   } else {
@@ -97,9 +98,7 @@ int checkAlarmStatus(){
         dispatchAlarm();
 
         Serial.println("\n--DOOR/WINDOW DETECTED--\n");
-      } else {
-        // node.alarmStatus.intrusionAlarm = false;  <<------ Ska bara kunna inaktiveras "aktivt" ..
-      }
+      } 
 
       // Motion
       if (node.sensors.motionDetect){
@@ -109,9 +108,7 @@ int checkAlarmStatus(){
         dispatchAlarm();
 
         Serial.println("\n--MOTION DETECTED--\n");
-      } else {
-        // node.alarmStatus.intrusionAlarm = false;  <<------ Ska bara kunna inaktiveras "aktivt" ..
-      }
+      } 
       return 0;
 
     case STATE_ARMED_HOME:
@@ -123,9 +120,7 @@ int checkAlarmStatus(){
         dispatchAlarm();
 
         Serial.println("\n--DOOR/WINDOW DETECTED--\n");
-      } else {
-        // node.alarmStatus.intrusionAlarm = false;  <<------ Ska bara kunna inaktiveras "aktivt" ..
-      }
+      } 
       return 0;
 
     case STATE_DISARMED:
@@ -140,6 +135,8 @@ void dispatchAlarm(){
   // sätt tidsstämplen för larmet
   if (node.timeIsSet){
     alarmInfo.time = getUnixTime();
+    Serial.print("Alarm time: ");     // just for test
+    Serial.println(alarmInfo.time);   // just for test
   }
 
   // skicka larmpaket till kö (BLE)
@@ -155,5 +152,7 @@ void dispatchAlarm(){
   }
 
   // nolla larmet
-  alarmInfo =  {node.alarmMode, NONE, 0};
+  //alarmInfo.alarmMode = node.alarmMode; -- bör inte uppdateras här..
+  alarmInfo.trigger = NONE;
+  alarmInfo.time = 0;
 }
