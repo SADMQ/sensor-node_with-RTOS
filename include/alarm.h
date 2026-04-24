@@ -1,11 +1,15 @@
 #ifndef ALARM_H
 #define ALARM_H
 #include <Arduino_FreeRTOS.h> // testa om det behövs, annars ersätt med Arduino_FreeRTOS.h
+// #define ALARM_EXIT_TIMER_ID 1 -> flyttar till ESP.
+#define ALARM_ENTRY_TIMER_ID 2
 
 // RTOS semaphore för larm
 extern SemaphoreHandle_t xAlarmSemaphore;
 extern SemaphoreHandle_t xNetworkSemaphore;
 extern SemaphoreHandle_t xSystemMonitorSemaphore;
+extern TimerHandle_t xAlarmEntryTimer; 
+extern TimerHandle_t xAlarmExitTimer; 
 extern QueueHandle_t xAlarmQueue;
 extern QueueHandle_t xMessageQueue; 
 
@@ -19,7 +23,8 @@ void vNetworkTask(void *Params);
 void vSystemMonitorTask(void *Params);
 void updCurrentTime(char* timestamp, size_t size);
 void vBLETask(void *Params);
-void dispatchAlarm();
+void dispatchAlarm(bool sharpDoorAlarm = false);
+void vAlarmTimerCallback(TimerHandle_t xTimer);
 
 typedef enum
 {

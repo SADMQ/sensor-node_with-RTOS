@@ -11,12 +11,14 @@
 #define MQTT_HEARTBEAT 20000           // | Testar 20s (LWT sker ~16s)
 #define BROKER_PORT 1883               // okrypt: 1883 - TLS, krypt: 8883
 
+
 WiFiClient wifiClient;
 MqttClient mqttClient(wifiClient);
 
 int port                         = BROKER_PORT;
 const char broker[]              = ZeroIP;
 const char alarmInfoTopic[]      = "alarmInfo"; // -> State, Trigger + Time 'struct' .. JSON.
+const char clientId[]            = "Sensor_node"; // testar om detta gör skillnad
 
 const char indoorTempTopic[]     = "sensors/indoorTemp";         // - Bara för test (ta bort senare..?)
 const char indoorHumidTopic[]    = "sensors/indoorHumidity";     // - bara för test (ta bort senare..?)
@@ -54,6 +56,7 @@ int manageMQTT() {
         mqttClient.endWill();
 
         // mqtt settings
+        mqttClient.setId(clientId); // testar om detta för skillnad..
         mqttClient.setKeepAliveInterval(MQTT_HEARTBEAT);
         mqttClient.setConnectionTimeout(MQTT_CONNECTION_TIMEOUT);
 

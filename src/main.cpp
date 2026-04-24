@@ -6,13 +6,16 @@
 #include "sensor_reed.h"
 #include "indicateStatus.h"
 #include "ble_manager.h"
+#define TIMER_ENTRY_TIME 30000
+// #define TIMER_EXIT_TIME 30000 -- flyttar till ESP..
 
 SemaphoreHandle_t xAlarmSemaphore;
 SemaphoreHandle_t xSystemMonitorSemaphore;
 SemaphoreHandle_t xNetworkSemaphore;
 TimerHandle_t xLEDTimer;
-QueueHandle_t xAlarmQueue;  // BLE kö - för ESP
-QueueHandle_t xMessageQueue; // MQTT kö - för broker.
+TimerHandle_t xAlarmEntryTimer; // Används för aktivering (tid innan larmning) samt inför triggning av larm (tid för avlarming).
+QueueHandle_t xAlarmQueue;    // BLE-Send kö - för ESP
+QueueHandle_t xMessageQueue;  // MQTT-Send kö - för broker.
 
 extern "C" void vApplicationTickHook(void) {
   node.sysTime++;
@@ -25,6 +28,8 @@ void setup() {
   Serial.println("--- STARTING SYSTEM ---");
 
   xLEDTimer = xTimerCreate("LED_STATUS", pdMS_TO_TICKS(idleLEDSpeed), pdTRUE, 0, vLEDTimerCallback);
+  xAlarmEntryTimer = xTimerCreate("ALARM_TIMER_ENTRY", pdMS_TO_TICKS(TIMER_ENTRY_TIME), pdFALSE, (void*)ALARM_ENTRY_TIMER_ID, vAlarmTimerCallback); 
+  
   xTimerStart(xLEDTimer, 0);
 
   xAlarmSemaphore = xSemaphoreCreateBinary();

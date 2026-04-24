@@ -80,15 +80,15 @@ void vAlarmTask(void *Params){
                 if (node.sensors.HWEvent_motionDetect){
                     node.sensors.motionDetect = true;
                     checkAlarmStatus();
-                    node.sensors.HWEvent_motionDetect = false;
-                    node.sensors.motionDetect = false;
+                    node.sensors.HWEvent_motionDetect = false;  // bör inte nollas här..?
+                    node.sensors.motionDetect = false;          // bör inte nollas här..?
                 }
 
                 if (node.sensors.HWEvent_reedSensor1){
-                    node.sensors.reedSensor1 = true;
+                    node.sensors.reedSensor1 = true; 
                     checkAlarmStatus();
-                    node.sensors.HWEvent_reedSensor1 = false;
-                    node.sensors.reedSensor1 = false;
+                    node.sensors.HWEvent_reedSensor1 = false;   // bör inte nollas här..?
+                    node.sensors.reedSensor1 = false;           // bör inte nollas här..?
                 }
             } else {
                 // går ENDAST på tidsintevall - oberoende semaphore, ~2000ms. 
@@ -113,7 +113,7 @@ void vNetworkTask(void *Params){
     for (;;){
         
         // behöver vakna vid LARM / STATE-update (samt timeout för Wifi + MQTT..)
-        BaseType_t xResult = xQueueReceive(xMessageQueue, &mqttToSend,  pdMS_TO_TICKS(5000));
+        BaseType_t xResult = xQueueReceive(xMessageQueue, &mqttToSend,  pdMS_TO_TICKS(1000));
 
         manageWiFi();
         if (wifiIsConnected()){
@@ -130,7 +130,6 @@ void vNetworkTask(void *Params){
             if (xResult){
                 // ::event::
                 sendMQTT(&mqttToSend); 
-                // c) vid larm / state (Queue) event [SEND]
             }
             
             manageMQTT(); 
@@ -191,10 +190,11 @@ void vBLETask(void* Params){
         if (!xResult){
             // Körs endast vid TIMEOUT
             manageBLE(nullptr);
+            vTaskDelay(pdMS_TO_TICKS(50)); // Testar att avlasta efter sändning..
         } else {
             // Körs endast vid KÖ / LARM (= pdPASS/TRUE)
             manageBLE(&alarmInfoToSend);
         }
-        vTaskDelay(100);
+        vTaskDelay(pdMS_TO_TICKS(200)); 
     }
 }

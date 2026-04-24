@@ -91,13 +91,22 @@ int checkAlarmStatus(){
     case STATE_ARMED_AWAY:
       // Reed (door / widnow sensor)
       if (node.sensors.reedSensor1){
+
+        // flyttas efter timern..?
         node.alarmStatus.intrusionAlarm = true;
 
-        // lagrar vad & när i struct.
+        // lagrar vad & när i struct. (skicka omedelbart via BLE)
         alarmInfo.trigger = DOOR;
         dispatchAlarm();
+        
+        // Skickar till MQTT efter 30s
+        // countdown innan skarpt larm.. ESP + Arduino. 30s? 
+        // starta software-timer här .. BARA om den inte redan är startad.
+        if (!xTimerIsTimerActive(xAlarmEntryTimer)){
+          xTimerStart(xAlarmEntryTimer, 0);
+          Serial.println("\n--DOOR/WINDOW opend. Counting down.. --\n");
+        }
 
-        Serial.println("\n--DOOR/WINDOW DETECTED--\n");
       } 
 
       // Motion
@@ -119,7 +128,13 @@ int checkAlarmStatus(){
         alarmInfo.trigger = DOOR;
         dispatchAlarm();
 
-        Serial.println("\n--DOOR/WINDOW DETECTED--\n");
+        // Skickar till MQTT efter 30s
+        // countdown innan skarpt larm.. ESP + Arduino. 30s? 
+        // starta software-timer här .. BARA om den inte redan är startad.
+        if (!xTimerIsTimerActive(xAlarmEntryTimer)){
+          xTimerStart(xAlarmEntryTimer, 0);
+          Serial.println("\n--DOOR/WINDOW opend. Counting down.. --\n");
+        }
       } 
       return 0;
 
@@ -130,29 +145,40 @@ int checkAlarmStatus(){
 }
 
 // packa larmet med tidstämpel och skickar iväg till kö.
-void dispatchAlarm(){
+void dispatchAlarm(bool sharpDoorAlarm){
+
 
   // sätt tidsstämplen för larmet
   if (node.timeIsSet){
     alarmInfo.time = getUnixTime();
-    Serial.print("Alarm time: ");     // just for test
-    Serial.println(alarmInfo.time);   // just for test
   }
 
   // skicka larmpaket till kö (BLE)
   if (!xQueueSend(xAlarmQueue, &alarmInfo, pdMS_TO_TICKS(100))){
-    Serial.println("! Kunde ej skicka larm till AlarmQueue !");
+    Serial.println("! Kunde ej skicka larm till AlarmQueue (BLE) !");
     // spara larmet i EEPROM/NVS (Flash) ?
   }
-
-  // skicka larmpaket till kö (MQTT)
-  if (!xQueueSend(xMessageQueue, &alarmInfo, pdMS_TO_TICKS(100))){
-    Serial.println("! Kunde ej skicka larm till MessagesQueue !");
-    // spara larmet i EEPROM/NVS (Flash) ?
+  
+  if (alarmInfo.trigger != DOOR || sharpDoorAlarm) {
+    // skicka larmpaket till kö (MQTT)
+    if (!xQueueSend(xMessageQueue, &alarmInfo, pdMS_TO_TICKS(100))){
+      Serial.println("! Kunde ej skicka larm till MessagesQueue (MQTT) !");
+      // spara larmet i EEPROM/NVS (Flash) ?
+    }
   }
-
+  
   // nolla larmet
-  //alarmInfo.alarmMode = node.alarmMode; -- bör inte uppdateras här..
   alarmInfo.trigger = NONE;
   alarmInfo.time = 0;
+}
+
+void vAlarmTimerCallback(TimerHandle_t xTimer){
+  int timerID = (int)pvTimerGetTimerID(xTimer);
+
+  if (timerID == ALARM_ENTRY_TIMER_ID){ // NÄR STATE GÅR TILL DISAMED - GLÖM EJ NOLLA & STOPPA TIMERN -> xTimerStop()
+    // här larmar vi på skarpt! (öppnat dörr, men ej larmat av i tid)
+    alarmInfo.trigger = DOOR;
+    dispatchAlarm(true);
+    Serial.println("\n-- DOOR/WINDOW opend - ALARMING! --\n");
+  }
 }
