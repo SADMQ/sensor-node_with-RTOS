@@ -7,7 +7,7 @@
 #include "indicateStatus.h"
 #include "ble_manager.h"
 #define TIMER_ENTRY_TIME 30000
-#define HEARTBEAT_MISSING_TRIGGER 11000
+#define HEARTBEAT_MISSING_TRIGGER 15000
 // #define TIMER_EXIT_TIME 30000 -- flyttar till ESP..
 
 SemaphoreHandle_t xAlarmSemaphore;
