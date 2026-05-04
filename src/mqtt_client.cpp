@@ -9,19 +9,19 @@
 #define MQTT_RECONNECT_TIME 15000       // max reconnect intervall, Testar: 60s->10s
 #define MQTT_CONNECTION_TIMEOUT 20000  // testar öka från 5000..   
 #define MQTT_HEARTBEAT 20000           // | Testar 20s (LWT sker ~16s)
-#define BROKER_PORT 1883               // okrypt: 1883 - TLS, krypt: 8883
+#define BROKER_PORT 8883               // okrypt: 1883 - TLS, krypt: 8883
 
 
-WiFiClient wifiClient;
+WiFiSSLClient wifiClient;
 MqttClient mqttClient(wifiClient);
 
 int port                         = BROKER_PORT;
 const char broker[]              = ZeroIP;
-const char alarmInfoTopic[]      = "alarmInfo"; // -> State, Trigger + Time 'struct' .. JSON.
-const char clientId[]            = "Sensor_node"; // testar om detta gör skillnad
+// const char clientId[]            = "Sensor_node"; // testar om detta gör skillnad
 
 const char indoorTempTopic[]     = "sensors/indoorTemp";         // - Bara för test (ta bort senare..?)
 const char indoorHumidTopic[]    = "sensors/indoorHumidity";     // - bara för test (ta bort senare..?)
+const char alarmInfoTopic[]      = "alarmInfo"; // -> State, Trigger + Time 'struct' .. JSON.
 const char systemFailure[]       = "systemFailure";
 const char willTopic[]           = "sensor-node-status";
 const char willPayload[]         = "OFFLINE";
@@ -32,19 +32,35 @@ int willQos                      = 1;
 unsigned long MQTTConnectTimer = -MQTT_RECONNECT_TIME; // Testar: för att connecta omedelbart vid uppstart..
 unsigned long MQTTLastSendTimer = -MQTT_SEND_TIME; // Testar: skicka första meddelandet omedelbart..
 
-void initCredentials(){
+void initMQTTid() {
 
-    //wifiClient.setCACert(root_ca); // ----------- <<< OBS: INAKTIVERAR FÖR TEST <<<
-    //mqttClient.setUsernamePassword(MQTT_USER, MQTT_PASS);
+    uint8_t mac[6];
+    WiFi.macAddress(mac);
+    char idBuf[20];
+
+    sprintf(idBuf, "Node-%02X%02X%02X", mac[3], mac[4], mac[5]); 
+
+    mqttClient.setId(idBuf);
+}
+
+void initCredentials() {
+
+    wifiClient.setCACert(root_ca); // ----------- <<< OBS: INAKTIVERAR FÖR TEST <<<
+    mqttClient.setUsernamePassword(MQTT_USER, MQTT_PASS);
+    initMQTTid();
+    mqttClient.onMessage(receiveMQTT);
+
 }
 
 int manageMQTT() {
+
+    wifiClient.setTimeout(60000);//Socket timeout
 
     if (node.connectionStatus.mqttIsActive){
         
         
         sendMQTT(nullptr); // ---> Flyttad! Ligger i task, men nullptr körs ändå för poll. ( samt för DHT11 än så länge ).
-        receiveMQTT();
+        
     }
 
     if ((node.sysTime - MQTTConnectTimer >= MQTT_RECONNECT_TIME) && (!mqttClient.connected())){
@@ -55,15 +71,14 @@ int manageMQTT() {
         mqttClient.print(willPayload);
         mqttClient.endWill();
 
-        // mqtt settings
-        mqttClient.setId(clientId); // testar om detta för skillnad..
+        
         mqttClient.setKeepAliveInterval(MQTT_HEARTBEAT);
         mqttClient.setConnectionTimeout(MQTT_CONNECTION_TIMEOUT);
 
         if (mqttClient.connect(broker, port)) { 
             Serial.println("\nMQTT: Connecting..\n");
             node.connectionStatus.mqttIsActive = true;
-            initSendMQTT();
+            initSendReceiveMQTT();
             return true;
 
         } else {
@@ -74,11 +89,16 @@ int manageMQTT() {
     } 
 }
 
-void initSendMQTT(){
+void initSendReceiveMQTT(){
     // one-time, init messages
     mqttClient.beginMessage(willTopic, true, 1, false);
     mqttClient.print("ONLINE");
     mqttClient.endMessage();
+
+    mqttClient.subscribe("cmnd/alarm/state");
+
+    mqttClient.flush(); ///////////////////
+    Serial.println("MQTT: Subscribed to cmnd/alarm/state");
     }
 
 // -- avgör om datan behöver publiseras - Beroende på sensorer/status samt state --
@@ -135,6 +155,30 @@ void sendMQTT(AlarmInfo *info){
 }
     
 
-void receiveMQTT(){
-    // TA EMOT data (sub) från Broker -- "remoteActivate"
+void receiveMQTT(int messageSize) {
+    String topic = mqttClient.messageTopic();
+    
+    if (topic == "cmnd/alarm/state") {
+        // Read the character from the Python gateway
+        char cmd = (char)mqttClient.read(); 
+        
+        // Update the system state based on your enum
+        if (cmd == '0') {
+            node.alarmMode = STATE_DISARMED;
+            Serial.println("MODE: Disarmed from Thingsboard");
+        } 
+        else if (cmd == '1') {
+            node.alarmMode = STATE_ARMED_HOME;
+            Serial.println("MODE: Armed - Home from Thingsboard");
+        }
+        else if (cmd == '2') {
+            node.alarmMode = STATE_ARMED_AWAY;
+            Serial.println("MODE: Armed - Away from Thingsboard");
+        }
+        
+        // Finalize read for this message
+        while(mqttClient.available()) { 
+            mqttClient.read(); 
+        }
+    }
 }

@@ -107,6 +107,7 @@ void vAlarmTask(void *Params){
 void vNetworkTask(void *Params){
     // körs bara EN gång
     initWiFi();
+    static int iterationCntr = 0;
     AlarmInfo mqttToSend;
     Serial.println("WiFi: Init - Complete!");
 
@@ -123,9 +124,9 @@ void vNetworkTask(void *Params){
                 node.timeIsSet = initTimeWiFi();
             }
             // synca tiden mot broker ----- [ Inaktivera pga MQTT problem...? ]
-            //if (!node.NTCsynced && node.connectionStatus.mqttIsActive){
-            //    node.NTCsynced = initTimeNTP();
-            //}
+            if (!node.NTCsynced && node.connectionStatus.mqttIsActive){
+               node.NTCsynced = initTimeNTP();
+            }
 
             if (xResult){
                 // ::event::
@@ -134,7 +135,7 @@ void vNetworkTask(void *Params){
             
             manageMQTT(); 
         }
-        //vTaskDelay(5000);
+        vTaskDelay(3000);   
     }
 }
 
@@ -200,6 +201,6 @@ void vBLETask(void* Params){
                 handleStateChange((AlarmMode)newState);
             }
         } 
-        vTaskDelay(pdMS_TO_TICKS(100)); 
+        vTaskDelay(pdMS_TO_TICKS(750)); // 750??
     }
 }

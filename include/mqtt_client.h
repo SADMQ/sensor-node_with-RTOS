@@ -1,10 +1,11 @@
 #ifndef MQTT_CLIENT_H
 #define MQTT_CLIENT_H
 
+void initMQTTid();
 void initCredentials();
 int manageMQTT();
-void initSendMQTT();
+void initSendReceiveMQTT();
 void sendMQTT(AlarmInfo *info);
-void receiveMQTT();
+void receiveMQTT(int messageSize);
 
 #endif
