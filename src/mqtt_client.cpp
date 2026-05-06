@@ -159,26 +159,19 @@ void receiveMQTT(int messageSize) {
     String topic = mqttClient.messageTopic();
     
     if (topic == "cmnd/alarm/state") {
-        // Read the character from the Python gateway
         char cmd = (char)mqttClient.read(); 
         
-        // Update the system state based on your enum
-        if (cmd == '0') {
-            node.alarmMode = STATE_DISARMED;
-            Serial.println("MODE: Disarmed from Thingsboard");
-        } 
-        else if (cmd == '1') {
-            node.alarmMode = STATE_ARMED_HOME;
-            Serial.println("MODE: Armed - Home from Thingsboard");
-        }
-        else if (cmd == '2') {
-            node.alarmMode = STATE_ARMED_AWAY;
-            Serial.println("MODE: Armed - Away from Thingsboard");
+        if (cmd == '2') { 
+            // 1. Mark that it was a remote activation in your struct
+            alarmInfo.remoteActivate = 1;
+            
+            handleStateChange(STATE_ARMED_AWAY);
+            
+            Serial.println("ARMED AWAY via ThingsBoard");
         }
         
-        // Finalize read for this message
-        while(mqttClient.available()) { 
-            mqttClient.read(); 
-        }
+        // Flush the rest of the message
+        while(mqttClient.available()) {
+             mqttClient.read(); }
     }
 }

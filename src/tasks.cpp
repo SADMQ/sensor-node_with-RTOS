@@ -107,7 +107,7 @@ void vAlarmTask(void *Params){
 void vNetworkTask(void *Params){
     // körs bara EN gång
     initWiFi();
-    static int iterationCntr = 0;
+    // static int iterationCntr = 0;
     AlarmInfo mqttToSend;
     Serial.println("WiFi: Init - Complete!");
 
