@@ -159,15 +159,13 @@ void receiveMQTT(int messageSize) {
     String topic = mqttClient.messageTopic();
     
     if (topic == "cmnd/alarm/state") {
-        char cmd = (char)mqttClient.read(); 
+        char cmnd = (char)mqttClient.read(); 
         
-        if (cmd == '2') { 
-            // 1. Mark that it was a remote activation in your struct
+        if (cmnd == '2') { 
+
             alarmInfo.remoteActivate = 1;
             
-            handleStateChange(STATE_ARMED_AWAY);
-            
-            Serial.println("ARMED AWAY via ThingsBoard");
+            Serial.println("REMOTE ACTIVATE via ThingsBoard");
         }
         
         // Flush the rest of the message
